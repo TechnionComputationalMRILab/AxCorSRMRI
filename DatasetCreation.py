@@ -623,12 +623,11 @@ class CustomDataset_Test(Dataset):
 
         if self.lr:
             original = original_tensor[ind - lim:ind + lim + 1,:, :, :]
-            print(original.shape)
             original = torch.permute(original, (1, 0, 2, 3))
-            print(original.shape)
+
         else:
             original = original_tensor[ind, :, :, :]
-            print(original.shape)
+
 
         title = file + '_slice_' + str(ind)
 

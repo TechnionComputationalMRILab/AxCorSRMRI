@@ -53,7 +53,8 @@ def save_img(image,path,title ='_' ):
     dir_path = os.path.dirname(path)
     ending = '.nii.gz'
     writer = sitk.ImageFileWriter()
-    output_name = dir_path+'/'+file_name+title+ending
+    #output_name = dir_path+'/'+file_name+title+ending
+    output_name = os.path.join(dir_path,file_name+title+ending)
     writer.SetFileName(output_name)
     writer.Execute(image)
 
@@ -76,14 +77,14 @@ def ResampleCases(path_dir,prefix = None):
             reader.SetFileName(path_copy)
             image = reader.Execute()
             if prefix is not None:
-                if prefix in file:
+                if prefix in file and ("_isotropic") not in file:
                     pa = sitk.PermuteAxesImageFilter()
                     pa.SetOrder([0, 2, 1])
                     img_permute = pa.Execute(image)
                     isotropic_formula_image = IsotropicResample(img_permute)
                     save_img(isotropic_formula_image, path_copy, "_isotropic")
             else:
-                if "Cor" in file or "COR" in file or "cor" in file  :
+                if ("Cor" in file or "COR" in file or "cor" in file) and ("_isotropic" not in file)  :
                     pa = sitk.PermuteAxesImageFilter()
                     pa.SetOrder([0, 2, 1])
                     img_permute = pa.Execute(image)
@@ -162,5 +163,5 @@ def CreateDateBase(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,te
                 state = [*['train'] * (test_ind-1),*['test'] * test_size,*['valid'] * val_size,*['train'] * (train_size-test_ind+1)]
         df[str(i+1)] =state
 
-
-    df.to_csv(Path_to_data + "DB.csv")
+    filename = os.path.join(Path_to_data,"DB.csv")
+    df.to_csv(filename)

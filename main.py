@@ -220,7 +220,8 @@ def Data_Inittializaion (args):
 
     else:
         if config.train_separate:
-            result_dir = config.path + config.title_
+
+            result_dir = os.path.join(config.path,config.title_)
             if not config.debug_mode:
                 os.makedirs(result_dir, exist_ok=True)
                 #utils.json_dump(config.data_json, result_dir)
@@ -235,14 +236,15 @@ def Data_Inittializaion (args):
                 result_dir = config.path_to_trained_model
             print("Loading pretrained model from dir-{} ".format(result_dir))
 
-    writer = SummaryWriter(result_dir + '/' + 'tensor_logs')
+    writer_path = os.path.join(result_dir,'tensor_logs')
+    writer = SummaryWriter(writer_path)
 
     # prof = torch.profiler.profile(
     #     schedule=torch.profiler.schedule(wait=1, warmup=1, active=5, repeat=1),
     #     on_trace_ready=torch.profiler.tensorboard_trace_handler(result_dir + '/' + 'prof_logs'),
     #     record_shapes=True,
     #     with_stack=True)
-    prof = None
+
 
     print("Load train dataset and valid dataset...")
 
@@ -259,34 +261,34 @@ def Data_Inittializaion (args):
                                      fold=config.cross_validation_fold,
                                      state=config.augmentation_state)
 
-        with open(result_dir + '/' + "train_list.json", "w") as fp:
+        with open(os.path.join(result_dir ,"train_list.json"), "w") as fp:
             json.dump(train_list, fp)
 
-        with open(result_dir + '/' + "valid_list.json", "w") as fp:
+        with open(os.path.join(result_dir, "valid_list.json"), "w") as fp:
             json.dump(valid_list, fp)
 
-        with open(result_dir + '/' + "test_list.json", "w") as fp:
+        with open(os.path.join(result_dir ,"test_list.json"), "w") as fp:
             json.dump(test_list, fp)
 
 
-        with open(result_dir + '/' + "train_file_to_idx.json", "w") as fp:
+        with open(os.path.join(result_dir ,"train_file_to_idx.json"), "w") as fp:
             json.dump(train_file_to_idx, fp)
 
-        with open(result_dir + '/' + "val_file_to_idx.json", "w") as fp:
+        with open(os.path.join(result_dir ,"val_file_to_idx.json"), "w") as fp:
             json.dump(val_file_to_idx, fp)
 
-        with open(result_dir + '/' + "test_file_to_idx.json", "w") as fp:
+        with open(os.path.join(result_dir ,"test_file_to_idx.json"), "w") as fp:
             json.dump(test_file_to_idx, fp)
 
     else:
 
-        with open(result_dir + '/' + "train_list.json", 'r') as f:
+        with open(os.path.join(result_dir , "train_list.json"), 'r') as f:
             train_list = json.load(f)
 
-        with open(result_dir + '/' + "valid_list.json", "r") as f:
+        with open(os.path.join(result_dir , "valid_list.json"), "r") as f:
             valid_list = json.load(f)
 
-        with open(result_dir + '/' + "test_list.json", "r") as f:
+        with open(os.path.join(result_dir ,"test_list.json"), "r") as f:
             test_list = json.load(f)
 
         if len([config.path_to_set]) > 1:
@@ -295,13 +297,13 @@ def Data_Inittializaion (args):
             flag_milti_dataset = False
 
 
-        with open(result_dir + '/' + "train_file_to_idx.json", 'r') as f:
+        with open(os.path.join(result_dir , "train_file_to_idx.json"), 'r') as f:
             train_file_to_idx = json.load(f)
 
-        with open(result_dir + '/' + "val_file_to_idx.json", "r") as f:
+        with open(os.path.join(result_dir, "val_file_to_idx.json"), "r") as f:
             val_file_to_idx = json.load(f)
 
-        with open(result_dir + '/' + "test_file_to_idx.json", "r") as f:
+        with open(os.path.join(result_dir , "test_file_to_idx.json"), "r") as f:
             test_file_to_idx = json.load(f)
 
         list_train_volume = DatasetCreation.create_volume_list(train_file_to_idx, config.patch_size, train=True)
@@ -419,9 +421,9 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         if ".pth" in config.path_to_trained_model:
             checkpoint = torch.load(config.path_to_trained_model)
         else:
-            checkpoint = torch.load(config.path_to_trained_model + 'Saved/Periodic_save/periodic.pth')
-            # checkpoint = torch.load(config.path_to_trained_model + 'Saved/PSNR/best.pth')
-            # checkpoint = torch.load(config.path_to_trained_model + '/last_save.pth')
+            checkpoint_path = os.path.join(config.path_to_trained_model,'Saved/Periodic_save/periodic.pth')
+            checkpoint = torch.load(checkpoint_path)
+
 
         discriminator_I.load_state_dict(checkpoint["Discriminator_I"], strict=config.strict)
         discriminator_E.load_state_dict(checkpoint["Discriminator_E"], strict=config.strict)
@@ -496,8 +498,9 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         best_kid = min(kid, best_kid)
         if not config.debug_mode :
             print("periodic save ")
-            if not os.path.isdir(result_dir +'/Saved'+ '/Periodic_save'):
-                os.makedirs(result_dir +'/Saved' +'/Periodic_save', exist_ok=True)
+            temp_path = os.path.join(result_dir,"Saved","Periodic_save")
+            if not os.path.isdir(temp_path):
+                os.makedirs(temp_path, exist_ok=True)
                 torch.save({'Discriminator_I': discriminator_I.state_dict(),
                             'Discriminator_E': discriminator_E.state_dict(),
                             'Generator': generator.state_dict(),
@@ -518,9 +521,10 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                             'max_size_hr':max_size_hr}, os.path.join(result_dir,'Saved','Periodic_save', f"periodic.pth"))
 
         if not config.debug_mode and epoch in config.cheakpoint_epoch:
+            temp_path = os.path.join(result_dir ,"Saved","check_points")
             print("checkpoint save {}".format(epoch))
-            if not os.path.isdir(result_dir +'/Saved'+ '/check_points'):
-                os.makedirs(result_dir +'/Saved' +'/check_points', exist_ok=True)
+            if not os.path.isdir(temp_path):
+                os.makedirs(temp_path, exist_ok=True)
             torch.save({
                 'Discriminator_I': discriminator_I.state_dict(),
                 'Discriminator_E': discriminator_E.state_dict(),
@@ -539,11 +543,12 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                 "best_kid": best_kid,
                 'count':count,
                 'max_size_lr' :max_size_lr,
-                'max_size_hr':max_size_hr}, os.path.join(result_dir,'Saved', 'check_points',str(epoch)+".pth"))
+                'max_size_hr':max_size_hr}, os.path.join(temp_path,str(epoch)+".pth"))
 
         if not config.debug_mode and is_best_fid:
-            if not os.path.isdir(result_dir + '/Saved' + '/FID'):
-                os.makedirs(result_dir + '/Saved' + '/FID', exist_ok=True)
+            temp_path = os.path.join(result_dir, "Saved", "FID")
+            if not os.path.isdir(temp_path):
+                os.makedirs(temp_path, exist_ok=True)
             # torch.save(discriminator.state_dict(), os.path.join(result_dir,'Saved','PSNR',"d-best.pth"))
             # torch.save(generator.state_dict(), os.path.join(result_dir,'Saved','PSNR',f"g-best.pth"))
             torch.save({
@@ -562,11 +567,12 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                 "best_fid_original": best_fid,
                 'count': count,
                 'max_size_lr': max_size_lr,
-                'max_size_hr': max_size_hr}, os.path.join(result_dir, 'Saved', 'FID', f"best.pth"))
+                'max_size_hr': max_size_hr}, os.path.join(temp_path, f"best.pth"))
 
         if not config.debug_mode and is_best_kid:
-            if not os.path.isdir(result_dir + '/Saved' + '/KID'):
-                os.makedirs(result_dir + '/Saved' + '/KID', exist_ok=True)
+            temp_path = os.path.join(result_dir ,"Saved","KID")
+            if not os.path.isdir(temp_path):
+                os.makedirs(temp_path, exist_ok=True)
             # torch.save(discriminator.state_dict(), os.path.join(result_dir,'Saved','PSNR',"d-best.pth"))
             # torch.save(generator.state_dict(), os.path.join(result_dir,'Saved','PSNR',f"g-best.pth"))
             torch.save({
@@ -585,7 +591,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                 "best_fid_original": best_fid,
                 'count': count,
                 'max_size_lr': max_size_lr,
-                'max_size_hr': max_size_hr}, os.path.join(result_dir, 'Saved', 'KID', f"best.pth"))
+                'max_size_hr': max_size_hr}, os.path.join(temp_path, f"best.pth"))
     end_all_train = time.time()
     torch.save({
         'Discriminator_I': discriminator_I.state_dict(),
@@ -624,9 +630,9 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
     temp_dict['TEST KID LR-HR weight mean'] = KID_original_lr_mean
     temp_dict['TEST KID LR-HR weight std'] = KID_original_lr_std
     list_results.append(temp_dict)
-
+    temp = os.path.join(result_dir,"results_new.csv")
     keys = list_results[0].keys()
-    with open(result_dir + "/" + "results_new.csv", "w") as file:
+    with open(temp, "w") as file:
         csvwriter = csv.DictWriter(file, keys)
         csvwriter.writeheader()
         csvwriter.writerows(list_results)
