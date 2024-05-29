@@ -52,11 +52,14 @@ def save_tensor_to_img(tensor,path_to_save,file_path ='_' ):
     ending = '.nii.gz'
     writer = sitk.ImageFileWriter()
     if "COR" in file_path:
-        output_name = path_to_save + '/'+ file_name + "COR_SR_"  +  ending
+        #output_name = path_to_save + '/'+ file_name + "COR_SR_"  +  ending
+        output_name = os.path.join(path_to_save,file_name + "COR_SR_"  +  ending)
     elif "AX" in file_path:
-        output_name = path_to_save + '/' + file_name + "AX_SR_" + ending
+        #output_name = path_to_save + '/' + file_name + "AX_SR_" + ending
+        output_name = os.path.join(path_to_save, file_name + "AX_SR_" + ending)
     else:
-        output_name = path_to_save+'/'+file_name+"_SR_"+ending
+        #output_name = path_to_save+'/'+file_name+"_SR_"+ending
+        output_name = os.path.join(path_to_save, file_name + "_SR_" + ending)
     writer.SetFileName(output_name)
     writer.Execute(image)
 
@@ -73,7 +76,8 @@ def save_tensor(tensor,tensot_type,title,result_dir):
 
     print(tensor.shape)
     title_ = title.split('.nii')[0].split("/")[-1]
-    path = result_dir + '/' + tensot_type + "_" + title_ +'.pt'
+    #path = result_dir + '/' + tensot_type + "_" + title_ +'.pt'
+    path = os.path.join(result_dir, tensot_type + "_" + title_ +'.pt')
     torch.save(tensor, path)
     return
 
@@ -128,7 +132,7 @@ def visualize_Multi_slice(lr, sr, epoch, path,title_,rec_title,index, writer,ste
     fig.tight_layout()
     if not config.debug_mode:
         title_save = title + '_epoch_' +str(epoch)
-        plt.savefig(path + '/' + '_' + title_save+ '.png')
+        plt.savefig(os.path.join(path , '_' + title_save+ '.png'))
         writer.add_figure(title_, fig, global_step=step)
         step += 1
         return step
@@ -204,7 +208,7 @@ def visualize_Multi_slice_test(lr, sr, path, title_,test_=False):
     fig.tight_layout()
 
     title_save = title
-    plt.savefig(path + '/' +'_' + title_save+ '.png' )
+    plt.savefig(os.path.join(path ,'_' + title_save+ '.png' ))
     plt.close()
 
 
@@ -249,7 +253,7 @@ def visualize_reconstrated_no_hr(lr_0,lr_1,lr_2, sr, epoch, path, title_,rec_tit
     fig.tight_layout()
     if not config.debug_mode:
         title_save = title + '_epoch_' +str(epoch)
-        plt.savefig(path + '/' + '_' + title_save+ '.png')
+        plt.savefig(os.path.join(path , '_' + title_save+ '.png'))
         writer.add_figure(title_, fig, global_step=step)
 
     else:
@@ -790,7 +794,7 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
 
 def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,Incep_model = None):
 
-    result_dir_for_tensors = result_dir +"/saved_tensors"
+    result_dir_for_tensors = os.path.join(result_dir ,"saved_tensors")
     os.makedirs(result_dir_for_tensors, exist_ok=True)
 
     batch_time = AverageMeter("Time", ":6.3f")
@@ -853,7 +857,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
                 if config.save_tensor:
 
                     if slice_title[0].split('_slice')[0] != temp_title:
-                        print(temp_file_hr_weight_.shape)
+
                         save_tensor(temp_file_hr_weight_, "HR", temp_title, result_dir_for_tensors)
                 temp_file_hr_weight = []
 
