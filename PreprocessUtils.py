@@ -72,7 +72,7 @@ def ResampleCases(path_dir,prefix = None):
         for file in files:
             reader = sitk.ImageFileReader()
             # The option for nii images
-            if ".dcm" not in file or ".nii" not in file:
+            if ".dcm" not in file and ".nii" not in file:
                 continue
 
             path_copy = subdir+file

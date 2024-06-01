@@ -28,8 +28,7 @@ d_model_betas = (0.9, 0.999)
 g_model_betas = (0.9, 0.999)
 
 epochs = 1000
-
-debug_mode = False
+use_db = True
 # MultiStepLR scheduler parameter for SRGAN
 
 d_optimizer_step_size = 1e5

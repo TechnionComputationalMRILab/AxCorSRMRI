@@ -36,18 +36,14 @@ def setup_parser():
     parser.add_argument('--path_to_trained_model', default=None, type=str)
     parser.add_argument('--amount_of_files', default=None, type=int)
     parser.add_argument('--amount_of_slices', default=3, type=int)
-    parser.add_argument('--channels', default=16, type=int)
     parser.add_argument('--batch_size', default=None, type=int)
     parser.add_argument('--valid_batch_size', default=None, type=int)
     parser.add_argument('--total_samples', default=None, type=int)
     parser.add_argument('--title', default=None, type=str)
     parser.add_argument('--data_type', default="nifti", type=str)
-    parser.add_argument('--use_db', default=False, type=bool)
     parser.add_argument('--gpu_device', default=None,type=str)
     parser.add_argument('--loss', default='rel', type=str)
-    parser.add_argument('--use_ssim_loss', default=False, type=bool)
     parser.add_argument('--cross_validation_fold', default=None, type=int)
-    parser.add_argument('--debug_mode', default=False, type=bool)
     parser.add_argument('--patch_size', default=64, type=int)
     parser.add_argument('--epochs', default=None, type=int)
     parser.add_argument('--scheduler', default='const', type=str,choices=['const', 'Plateau', 'Multiplicative'])
@@ -56,20 +52,14 @@ def setup_parser():
     parser.add_argument('--max_workers_train', default=2, type=int)
     parser.add_argument('--max_workers_valid', default=2, type=int)
     parser.add_argument('--val_epoch', default=None, type=int)
-    parser.add_argument('--multiprocess', default=False, type=bool)
     parser.add_argument('--random_patches', default=False, type=bool)
-    parser.add_argument('--no_train',  default=False, type=bool)
-    parser.add_argument('--no_valid',  default=False, type=bool)
     parser.add_argument('--adversarial_weight_I', default=None, type=float)
     parser.add_argument('--adversarial_weight_E', default=None, type=float)
     parser.add_argument('--set_seed', default=24, type=int)
-    parser.add_argument('--sig_flag', default=False, type=bool)
     parser.add_argument('--d_optimizer_step_size', default=None, type=int)
     parser.add_argument('--g_optimizer_step_size', default=None, type=int)
-    parser.add_argument('--test_mode', default=False, type=bool)
     parser.add_argument('--image_save_freq_batch', default=100, type=int)
     parser.add_argument('--image_save_freq_epoch', default=100, type=int)
-    parser.add_argument('--augmentation_state', default=False, type=bool)
     parser.add_argument('--cheakpoint_epoch', default=[], type=int,nargs='*')
     parser.add_argument('--transfer_learning', default=False, type=bool)
     parser.add_argument('--save_tensor',  default=False, type=bool)
@@ -97,7 +87,7 @@ def Data_Inittializaion (args):
 
     config.scheduler = args.scheduler
     config.transfer_learning = args.transfer_learning
-    config.augmentation_state = args.augmentation_state
+
     config.save_tensor = args.save_tensor
     config.save_nifti = args.save_nifti
     if args.path_to_trained_model is not None:
@@ -156,8 +146,6 @@ def Data_Inittializaion (args):
         config.val_epoch = args.val_epoch
     else:
         config.val_epoch = 10
-    if args.debug_mode:
-        config.debug_mode = args.debug_mode
 
     if args.patch_size:
         config.patch_size = args.patch_size
@@ -183,7 +171,6 @@ def Data_Inittializaion (args):
         else:
             config.title_ = str(args.title) + str(config.time_str)
     config.loss = args.loss
-    config.sig_flag = args.sig_flag
     if args.gpu_device is not None:
         config.multi_gpu = [int(elem) for elem in args.gpu_device.split(',')]
         if len(config.multi_gpu) > 1:
@@ -206,13 +193,12 @@ def Data_Inittializaion (args):
         # file.close()
         #
 
-        if not config.debug_mode:
-            os.makedirs(result_dir, exist_ok=True)
+
+        os.makedirs(result_dir, exist_ok=True)
             #utils.json_dump(config.data_json, result_dir)
             # save_pickle(config, 'config_var', result_dir)
             # save_pickle(args, 'args_var', result_dir)
-        else:
-            print("DEBUG MODE")
+
 
             # with open(config, 'w') as f:
             #     f.writelines()
@@ -222,13 +208,12 @@ def Data_Inittializaion (args):
         if config.train_separate:
 
             result_dir = os.path.join(config.path,config.title_)
-            if not config.debug_mode:
-                os.makedirs(result_dir, exist_ok=True)
-                #utils.json_dump(config.data_json, result_dir)
-                path_to_model = config.path_to_trained_model
-                print("Loading pretrained model from dir-{} ".format(path_to_model))
-            else:
-                print("DEBUG MODE")
+
+            os.makedirs(result_dir, exist_ok=True)
+            #utils.json_dump(config.data_json, result_dir)
+            path_to_model = config.path_to_trained_model
+            print("Loading pretrained model from dir-{} ".format(path_to_model))
+
         else:
             if ".pth" in config.path_to_trained_model:
                 result_dir = config.path_to_trained_model.split("Saved")[0]
@@ -258,8 +243,7 @@ def Data_Inittializaion (args):
             split_files_list_from_db(config.path_to_set, config.amount_of_files, config.total,
                                      config.amount_of_slices,max_slices=None \
                                      ,  patch_size=config.patch_size,
-                                     fold=config.cross_validation_fold,
-                                     state=config.augmentation_state)
+                                     fold=config.cross_validation_fold)
 
         with open(os.path.join(result_dir ,"train_list.json"), "w") as fp:
             json.dump(train_list, fp)
@@ -313,24 +297,24 @@ def Data_Inittializaion (args):
     valid_batch = config.val_batch_fsimo
     print("Load train dataset and valid dataset...")
     dataset_vl_lr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(valid_list[0]),lr=True,file_type =  config.data_type,
-                batch = valid_batch, patch_size=config.patch_size,use_db=args.use_db,
+                batch = valid_batch, patch_size=config.patch_size,use_db=config.use_db,
                                                            list_volumes=list_val_volume[0], file_to_idx=val_file_to_idx )
     dl_valid_lr = torch.utils.data.DataLoader(dataset=dataset_vl_lr, batch_size=valid_batch,
                                            num_workers=args.max_workers_valid,prefetch_factor=4)
     dataset_vl_hr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(valid_list[1]),lr=False,file_type =  config.data_type,
-                batch = valid_batch, patch_size=config.patch_size,use_db=args.use_db,
+                batch = valid_batch, patch_size=config.patch_size,use_db=config.use_db,
                                                                   list_volumes=list_val_volume[1], file_to_idx=val_file_to_idx)
     dl_valid_hr = torch.utils.data.DataLoader(dataset=dataset_vl_hr, batch_size=valid_batch,
                                            num_workers=args.max_workers_valid,prefetch_factor=4)
 
 
     dataset_test_lr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(test_list[0]),lr=True,file_type =  config.data_type,
-                batch = valid_batch,patch_size=config.patch_size,use_db=args.use_db,
+                batch = valid_batch,patch_size=config.patch_size,use_db=config.use_db,
                                                            list_volumes=list_test_volume[0], file_to_idx=test_file_to_idx )
     dl_test_lr = torch.utils.data.DataLoader(dataset=dataset_test_lr, batch_size=valid_batch,
                                            num_workers=args.max_workers_valid,prefetch_factor=4)
     dataset_test_hr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(test_list[1]),lr=False,file_type =  config.data_type
-                ,batch = valid_batch, patch_size=config.patch_size,use_db=args.use_db,
+                ,batch = valid_batch, patch_size=config.patch_size,use_db=config.use_db,
                                                                   list_volumes=list_test_volume[1], file_to_idx=test_file_to_idx)
     dl_test_hr = torch.utils.data.DataLoader(dataset=dataset_test_hr, batch_size=valid_batch,
                                            num_workers=args.max_workers_valid,prefetch_factor=4)
@@ -340,7 +324,7 @@ def Data_Inittializaion (args):
                                                              file_type=config.data_type
                                                              , batch=config.batch_size,
                                                              patch_size=config.patch_size,
-                                                              use_db=args.use_db,
+                                                              use_db=config.use_db,
                                                              list_volumes=list_train_volume,
                                                              file_to_idx=train_file_to_idx,
                                                              random_patch=args.random_patches)
@@ -364,7 +348,7 @@ def Data_Inittializaion (args):
 def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,args):
 
     print("Build model...")
-    generator = esrt.ESRT(upscale=1, sig_flag=config.sig_flag)
+    generator = esrt.ESRT(upscale=1)
     discriminator_I = New_D_doubleconv()
     discriminator_E = New_D_doubleconv()
 
@@ -496,31 +480,31 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         #KID
         is_best_kid = kid < best_kid
         best_kid = min(kid, best_kid)
-        if not config.debug_mode :
-            print("periodic save ")
-            temp_path = os.path.join(result_dir,"Saved","Periodic_save")
-            if not os.path.isdir(temp_path):
-                os.makedirs(temp_path, exist_ok=True)
-                torch.save({'Discriminator_I': discriminator_I.state_dict(),
-                            'Discriminator_E': discriminator_E.state_dict(),
-                            'Generator': generator.state_dict(),
-                            'D_scheduler_I': d_scheduler_I.state_dict(),
-                            'D_scheduler_E': d_scheduler_E.state_dict(),
-                            'G_scheduler': g_scheduler.state_dict(),
-                            'D_opt_I': d_optimizer_I.state_dict(),
-                            'D_opt_E': d_optimizer_E.state_dict(),
-                            'G_opt': g_optimizer.state_dict(),
-                            'epoch': epoch+1,
-                            'ratio_list1': ratio_list1,
-                            'ratio_list2': ratio_list2,
-                            "best_msid_original" : best_msid_original,
-                            "best_fid": best_fid,
-                            "best_kid": best_kid,
-                            'count':count,
-                            'max_size_lr' :max_size_lr,
-                            'max_size_hr':max_size_hr}, os.path.join(result_dir,'Saved','Periodic_save', f"periodic.pth"))
 
-        if not config.debug_mode and epoch in config.cheakpoint_epoch:
+        print("periodic save ")
+        temp_path = os.path.join(result_dir,"Saved","Periodic_save")
+        if not os.path.isdir(temp_path):
+            os.makedirs(temp_path, exist_ok=True)
+            torch.save({'Discriminator_I': discriminator_I.state_dict(),
+                        'Discriminator_E': discriminator_E.state_dict(),
+                        'Generator': generator.state_dict(),
+                        'D_scheduler_I': d_scheduler_I.state_dict(),
+                        'D_scheduler_E': d_scheduler_E.state_dict(),
+                        'G_scheduler': g_scheduler.state_dict(),
+                        'D_opt_I': d_optimizer_I.state_dict(),
+                        'D_opt_E': d_optimizer_E.state_dict(),
+                        'G_opt': g_optimizer.state_dict(),
+                        'epoch': epoch+1,
+                        'ratio_list1': ratio_list1,
+                        'ratio_list2': ratio_list2,
+                        "best_msid_original" : best_msid_original,
+                        "best_fid": best_fid,
+                        "best_kid": best_kid,
+                        'count':count,
+                        'max_size_lr' :max_size_lr,
+                        'max_size_hr':max_size_hr}, os.path.join(result_dir,'Saved','Periodic_save', f"periodic.pth"))
+
+        if epoch in config.cheakpoint_epoch:
             temp_path = os.path.join(result_dir ,"Saved","check_points")
             print("checkpoint save {}".format(epoch))
             if not os.path.isdir(temp_path):
@@ -545,7 +529,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                 'max_size_lr' :max_size_lr,
                 'max_size_hr':max_size_hr}, os.path.join(temp_path,str(epoch)+".pth"))
 
-        if not config.debug_mode and is_best_fid:
+        if is_best_fid:
             temp_path = os.path.join(result_dir, "Saved", "FID")
             if not os.path.isdir(temp_path):
                 os.makedirs(temp_path, exist_ok=True)
@@ -569,7 +553,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                 'max_size_lr': max_size_lr,
                 'max_size_hr': max_size_hr}, os.path.join(temp_path, f"best.pth"))
 
-        if not config.debug_mode and is_best_kid:
+        if is_best_kid:
             temp_path = os.path.join(result_dir ,"Saved","KID")
             if not os.path.isdir(temp_path):
                 os.makedirs(temp_path, exist_ok=True)

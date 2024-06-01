@@ -2,9 +2,43 @@
 Self-Supervised Realistic Through-Plane MRI Super Resolution from Clinical 2D Axial and Coronal Acquisition.
 
 
+## Instruction 
 
+**A full example can be seen in `sample.ipynb`**.
 
-
+- First create isotropicaly resampled coronal data.  
+```
+path_to_data_files = "/path/to/data/"
+coronal_files_prefix = None # not mandatory
+ResampleCases(path_dir = path_to_data_files ,prefix = coronal_files_prefix)
+```
+- Create .csv file database with the coronal axial and isotropical files. 
+```
+path_to_data_files = "/path/to/data/"
+CreateDateBase(path_to_data_files,cor_prefix=None,ax_prefix=None,train_frac=0.8,test_frac=0.1,num_folds = 1)
+```
+- Define main model 
+```
+override_args = {
+    "path_to_set":"/tcmldrive/shared/RambamMRE082022/new2/",
+    "path_to_results":"/argusdata/users/jenny075/JennySh/results/",
+    "batch_size":12,
+    "gpu_device":"0,1",
+    "amount_of_slices":3,
+    }
+parser = setup_parser()
+args, _ = parser.parse_known_args([])
+vars(args).update(override_args)
+```
+- Create the datasets
+```
+dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,config  = Data_Inittializaion(args)
+```
+- Train, valid and test the model.
+```
+training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,config)
+```
+_______________________________________________________________________
 ## License
 For this work we used the codes from the following works -
 

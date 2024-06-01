@@ -1,0 +1,29 @@
+--path_to_set - path to the training data. 
+--path_to_results path to results directory. 
+--path_to_trained_model path to trained model can  end in .pt or the creaeted folder Saved. 
+--amount_of_files Can choose how many files to use from the path_to_set directory. 
+--amount_of_slices Amount of consecutive slice as an input to the model. 
+--batch_size Batch size for training. 
+--valid_batch_size Batch size for validation. 
+--total_samples How many slices or patches to use. 
+--title The name of the new folder in path_to_results. 
+--gpu_device numerical order of devices for Data Parallel training. 
+--loss type of loss. 
+--cross_validation_fold In case you have several cross validation folds
+--patch_size Size of patch
+--epochs Amount of training epochs
+--scheduler Type of training scheduler
+--lr_g,lr_d Learning rate og the generator and the Discriminator
+--max_workers_train Number of workers for training
+--max_workers_valid Number of workers for validation
+--val_epoch How many epochs to preform validaion 
+--random_patches To random extracted patches
+--adversarial_weight_I,adversarial_weight_E Adversarial loss coefficent
+--set_seed set seed number
+--d_optimizer_step_size,g_optimizer_step_size Step size for the scheduler
+--image_save_freq_batch which batches to save images of progress 
+--image_save_freq_epoch which epoch to save images of progress
+--cheakpoint_epoch which number of epoch save the models
+--transfer_learning to use transfer_learning need path_to_trained_model as well.
+--save_tensor Save the reconstructed volume as tensor
+--save_nifti Save the reconstructed volume as Nifti file

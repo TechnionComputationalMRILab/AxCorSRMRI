@@ -130,15 +130,13 @@ def visualize_Multi_slice(lr, sr, epoch, path,title_,rec_title,index, writer,ste
 
     fig.suptitle(title, fontsize=16)
     fig.tight_layout()
-    if not config.debug_mode:
-        title_save = title + '_epoch_' +str(epoch)
-        plt.savefig(os.path.join(path , '_' + title_save+ '.png'))
-        writer.add_figure(title_, fig, global_step=step)
-        step += 1
-        return step
 
-    else:
-        plt.show()
+    title_save = title + '_epoch_' +str(epoch)
+    plt.savefig(os.path.join(path , '_' + title_save+ '.png'))
+    writer.add_figure(title_, fig, global_step=step)
+    step += 1
+    return step
+
 
 
 def visualize_Multi_slice_test(lr, sr, path, title_,test_=False):
@@ -251,13 +249,12 @@ def visualize_reconstrated_no_hr(lr_0,lr_1,lr_2, sr, epoch, path, title_,rec_tit
 
     fig.suptitle(title, fontsize=16)
     fig.tight_layout()
-    if not config.debug_mode:
-        title_save = title + '_epoch_' +str(epoch)
-        plt.savefig(os.path.join(path , '_' + title_save+ '.png'))
-        writer.add_figure(title_, fig, global_step=step)
 
-    else:
-        plt.show()
+    title_save = title + '_epoch_' +str(epoch)
+    plt.savefig(os.path.join(path , '_' + title_save+ '.png'))
+    writer.add_figure(title_, fig, global_step=step)
+
+
 
 
 def visualize_reconstrated(lr_0,lr_1,lr_2, sr, path, title_,test_=False):
