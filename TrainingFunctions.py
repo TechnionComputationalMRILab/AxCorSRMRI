@@ -901,7 +901,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
         #hr_tot_volume_list_weight_full.append(temp_file_hr_weight.detach())
         #hr_tot_volume_list_weight.append(np.array(temp_file_hr_weight.detach().cpu()).reshape(temp_file_hr_weight.size()[0], -1))
         if config.save_tensor:
-                    save_tensor(temp_file_hr_weight_, "HR",  temp_title, result_dir_for_tensors)
+            save_tensor(temp_file_hr_weight_, "HR",  temp_title, result_dir_for_tensors)
 
 
         print("rec_hr_tot len - {} ".format(len(rec_hr_tot)))
@@ -912,7 +912,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
         temp_title = []
         print("Reconstract LR images")
         for index, (lr_tot, size_lr_tot,slice_title) in enumerate(valid_dataloader_lr):
-            print(slice_title)
+            #print(slice_title)
             # if size_lr_tot[-1] == 320:
                 # print("320")
                 # print(slice_title)
@@ -923,9 +923,12 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
             if slice_title[0].split('_slice')[0] != temp_title:
                 # print ("Temp file - {}\n slice title - {}".format(temp_title,slice_title[0].split('_slice')[0]))
                 # print("Enter SR vol save")
+                print("temp_file_sr_weight - {}".format(temp_file_sr_weight))
+                print("temp_file_lr_weight - {}".format(temp_file_lr_weight))
                 temp_file_sr_weight_ = torch.stack(temp_file_sr_weight)
 
                 temp_file_lr_weight_ = torch.stack(temp_file_lr_weight)
+
                 if config.save_tensor:
 
                     if slice_title[0].split('_slice')[0] != temp_title :
@@ -1027,9 +1030,8 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
 
                     # rec_sr_tot.append(rec_sr)
 
-
-
-
+        print("temp_file_sr_weight - {}".format(temp_file_sr_weight))
+        print("temp_file_lr_weight - {}".format(temp_file_lr_weight))
         temp_file_sr_weight_ = torch.stack(temp_file_sr_weight)
 
         temp_file_lr_weight_ = torch.stack(temp_file_lr_weight)
