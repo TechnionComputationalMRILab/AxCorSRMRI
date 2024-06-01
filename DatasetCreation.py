@@ -202,7 +202,7 @@ def extract_patches(list_of_slices, patch_size = 64,train = False,state = False)
 
 
 
-def create_patch_list(list_files,max_patches,num_of_consecutive_slices,train = False,patch_size = 0,state = False):
+def create_patch_list(list_files,max_patches,num_of_consecutive_slices,train = False,patch_size = 0,state = False,Rec_dir= False):
     """
     This function receives list of_files and returns list of extracted patchs from this list.
     :param list_files: list of chosen files.
@@ -220,16 +220,26 @@ def create_patch_list(list_files,max_patches,num_of_consecutive_slices,train = F
     total_1 = 0
     total_2 = 0
 
-    for j in range(len(list_files)):
 
-        temp_list_1 =  return_list_of_valuble_slices(list_files[j][0],num_of_consecutive_slices)
-        total_1 += len(temp_list_1)
-        coustom_slices_1.extend(temp_list_1)
-        temp_list_2 =  return_list_of_valuble_slices(list_files[j][1],num_of_consecutive_slices)
-        total_2 += len(temp_list_2)
-        coustom_slices_2.extend(temp_list_2)
-    random.shuffle(coustom_slices_1)
-    random.shuffle(coustom_slices_2)
+    if Rec_dir :
+        for j in range(len(list_files)):
+            temp_list_1 = return_list_of_valuble_slices(list_files[j][0], num_of_consecutive_slices)
+            total_1 += len(temp_list_1)
+            coustom_slices_1.extend(temp_list_1)
+        random.shuffle(coustom_slices_1)
+        coustom_slices = [coustom_slices_1]
+        return coustom_slices
+    else:
+        for j in range(len(list_files)):
+
+            temp_list_1 =  return_list_of_valuble_slices(list_files[j][0],num_of_consecutive_slices)
+            total_1 += len(temp_list_1)
+            coustom_slices_1.extend(temp_list_1)
+            temp_list_2 =  return_list_of_valuble_slices(list_files[j][1],num_of_consecutive_slices)
+            total_2 += len(temp_list_2)
+            coustom_slices_2.extend(temp_list_2)
+        random.shuffle(coustom_slices_1)
+        random.shuffle(coustom_slices_2)
 
     if not train:
 
@@ -353,7 +363,7 @@ def pad_vol_patches(list_tensor):
 
     return list_tensor
 
-def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0):
+def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0,,Rec_dir=False):
     """
 
     :param list_files:
@@ -391,29 +401,42 @@ def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0):
 
     if len(list_files)==0:
         return [[], []], {}
+    if Rec_dir:
+        for j in range(len(list_files)):
+            temp_volume = load_nifti_image(list_files[j][0], 'nifti')
 
-    for j in range(len(list_files)):
-        temp_volume = load_nifti_image(list_files[j][0], 'nifti')
+            temp_volume, _ = extract_patches_with_volume(temp_volume, patch_size)
+            if not train:
+                split_volume, img_size = split_volume_to_patches(temp_volume, patch_size)
+                list_LR_tensor.append([split_volume, img_size])
+            else:
+                list_LR_tensor.append(temp_volume)
+            file_to_idx[list_files[j][0]] = j
+            list_LR_tensor = pad_vol_patches(list_LR_tensor)
+        return [list_LR_tensor], file_to_idx
+    else:
+        for j in range(len(list_files)):
+            temp_volume = load_nifti_image(list_files[j][0], 'nifti')
 
-        temp_volume,_ = extract_patches_with_volume(temp_volume, patch_size )
+            temp_volume,_ = extract_patches_with_volume(temp_volume, patch_size )
+            if not train:
+                split_volume,img_size = split_volume_to_patches(temp_volume,patch_size)
+                list_LR_tensor.append([split_volume,img_size])
+            else:
+                list_LR_tensor.append(temp_volume)
+            file_to_idx[list_files[j][0]] = j
+            temp_volume = load_nifti_image(list_files[j][1], 'nifti')
+            temp_volume, _ = extract_patches_with_volume(temp_volume, patch_size)
+            if not train:
+                split_volume,img_size = split_volume_to_patches(temp_volume,patch_size)
+                list_HR_tensor.append([split_volume,img_size])
+            else:
+                list_HR_tensor.append(temp_volume)
+
+            file_to_idx[list_files[j][1]] = j
         if not train:
-            split_volume,img_size = split_volume_to_patches(temp_volume,patch_size)
-            list_LR_tensor.append([split_volume,img_size])
-        else:
-            list_LR_tensor.append(temp_volume)
-        file_to_idx[list_files[j][0]] = j
-        temp_volume = load_nifti_image(list_files[j][1], 'nifti')
-        temp_volume, _ = extract_patches_with_volume(temp_volume, patch_size)
-        if not train:
-            split_volume,img_size = split_volume_to_patches(temp_volume,patch_size)
-            list_HR_tensor.append([split_volume,img_size])
-        else:
-            list_HR_tensor.append(temp_volume)
-
-        file_to_idx[list_files[j][1]] = j
-    if not train:
-        list_LR_tensor = pad_vol_patches(list_LR_tensor)
-        list_HR_tensor = pad_vol_patches(list_HR_tensor)
+            list_LR_tensor = pad_vol_patches(list_LR_tensor)
+            list_HR_tensor = pad_vol_patches(list_HR_tensor)
 
     return [list_LR_tensor, list_HR_tensor], file_to_idx
 
@@ -518,7 +541,18 @@ def split_files_list_from_db(path_to_set,max_files,max_patches,num_of_consecutiv
     return list_train_slices,list_val_slices,list_test_slices,False, list_train_volume, train_file_to_idx, \
         list_test_volume, test_file_to_idx, list_val_volume, val_file_to_idx
 
+def make_list_to_reconstract(config):
 
+    list_of_files = []
+    for subdir, dirs, files in os.walk(config.path_to_set):
+        for file in files:
+            if "isotropic" in file:
+                list_of_files.append(file)
+
+    list_test_slices = create_patch_list(list_of_files, 0, config.num_of_consecutive_slices, patch_size=config.patch_size,Rec_dir=True)
+    list_test_volume, test_file_to_idx = create_patch_list_and_volume_list(list_test_slices, train=False,
+                                                                           patch_size=config.patch_size,Rec_dir=True)
+    return list_test_slices,list_test_volume,test_file_to_idx
 
 class CustomDataset_Train(Dataset):
 
@@ -635,3 +669,5 @@ class CustomDataset_Test(Dataset):
             print("nan patches")
         return  original, img_size_o, title
 
+
+def create_test_list_from_dir(path_to_dir):

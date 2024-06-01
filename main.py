@@ -70,15 +70,17 @@ def setup_parser():
 def setup_parser_test():
 
     parser = argparse.ArgumentParser(description='...')
-    parser.add_argument('-list_of_models_and_patch_size', '--models', type=str, nargs='+', action='append',
-                        help='file list')
     parser.add_argument('--title', default=None, type=str)
     parser.add_argument('--path_to_results', default=None, type=str)
-    parser.add_argument('--max_workers_valid', default=None, type=int)
+    parser.add_argument('--path_to_set', default=None, type=str)
+    parser.add_argument('--path_to_trained_model', default=None, type=str)
     parser.add_argument('--save_tensor', default=False, type=bool)
     parser.add_argument('--save_nifti', default=False, type=bool)
-    parser.add_argument('--device', default=None, type=int)
-    parser.add_argument('--image_save_freq_batch', default=100, type=int)
+    parser.add_argument('--gpu_device' , default=None, type=int)
+    parser.add_argument('--patch_size', default=48, type=int)
+    parser.add_argument('--batch_size', default=40, type=int)
+    parser.add_argument('--consecutive_slices', default=3, type=int)
+    parser.add_argument('--max_workers_test', default=12, type=int)
     return parser
 
 
@@ -624,3 +626,57 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
 
     return
 
+def Reload_trained_model(config):
+
+    g_model_lr = 1e-4
+    g_model_betas = (0.9, 0.999)
+    g_optimizer_step_size = 5e5
+    g_optimizer_gamma = 0.5
+    generator = esrt.ESRT(upscale=1)
+    if config.use_multi_gpu:
+        generator = nn.DataParallel(generator, config.multi_gpu).to(config.device)
+    g_optimizer = optim.Adam(generator.parameters(), g_model_lr, g_model_betas)
+    g_scheduler = lr_scheduler.StepLR(g_optimizer, g_optimizer_step_size, g_optimizer_gamma)
+    if ".pth" in config.path_to_trained_model:
+        checkpoint = torch.load(config.path_to_trained_model)
+    else:
+        checkpoint_path = os.path.join(config.path_to_trained_model, 'Saved/Periodic_save/periodic.pth')
+        checkpoint = torch.load(checkpoint_path)
+
+    generator.load_state_dict(checkpoint["Generator"], strict=config.strict)
+
+    return generator
+def reconstracted_volumes(args):
+    config = {}
+    config.save_tensor = args.save_tensor
+    config.save_nifti = args.save_nifti
+    config.path_to_set = args.path_to_set
+    config.path = args.path_to_results
+    config.patch_size = args.patch_size
+    config.batch_size = args.batch_size
+    config.path_to_trained_model = args.path_to_trained_model
+    config.max_workers_test = args.max_workers_test
+    config.consecutive_slices = args.consecutive_slices
+    time_str = time.strftime("_%d_%m_%Y_%H_%M")
+    config.title_ = str(args.title) + str(time_str)
+    if args.gpu_device is not None:
+        config.multi_gpu = [int(elem) for elem in args.gpu_device.split(',')]
+        if len(config.multi_gpu) > 1:
+            config.use_multi_gpu = True
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_device)
+    print("config.multi_gpu - ",config.multi_gpu)
+    # Create a folder of super-resolution experiment results
+    print("gpu available:", torch.cuda.is_available())
+    if torch.cuda.is_available():
+        print('gpu count:', str(torch.cuda.device_count()))
+
+    list_test_slices,list_test_volume,test_file_to_idx = make_list_to_reconstract(config)
+    istropic_dataset = DatasetCreation.CustomDataset_Test(slices=config.amount_of_slices, file_list=list_test_slices,
+                                                       lr=True, file_type='nifti',
+                                                       batch=config.batch_size, patch_size=config.patch_size,
+                                                       use_db=True,
+                                                       list_volumes=list_test_volume, file_to_idx=test_file_to_idx)
+    isotropic_dataloader = torch.utils.data.DataLoader(dataset=istropic_dataset, batch_size=config.batch_size,
+                                           num_workers=args.max_workers_valid,prefetch_factor=4)
+    model = Reload_trained_model(args)
+    reconstract_SR_volumes(model,isotropic_dataloader,config)
