@@ -17,7 +17,7 @@ ResampleCases(path_dir = path_to_data_files ,prefix = coronal_files_prefix)
 path_to_data_files = "/path/to/data/"
 CreateDateBase(path_to_data_files,cor_prefix=None,ax_prefix=None,train_frac=0.8,test_frac=0.1,num_folds = 1)
 ```
-- Define main model 
+- Define main parameters and  model parameters. Explanation on the possible parameters can be found at `parameter_dictionary.txt`.    
 ```
 override_args = {
     "path_to_set":"/tcmldrive/shared/RambamMRE082022/new2/",
@@ -37,6 +37,21 @@ dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,confi
 - Train, valid and test the model.
 ```
 training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,config)
+```
+- If you already have trained model and you went to apply it on all the files in the folder
+```
+override_args_test = {
+    "path_to_set":"/tcmldrive/shared/RambamMRE082022/new2/",
+    "path_to_results":"/argusdata/users/jenny075/JennySh/results/",
+    "gpu_device":"0,1",
+    "title":"Test",
+}
+
+parser = setup_parser_test()
+args_, _ = parser.parse_known_args([])
+vars(args_).update(override_args_test)
+
+reconstract_SR_volumes_in_folder(args_)
 ```
 _______________________________________________________________________
 ## License
