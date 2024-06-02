@@ -363,7 +363,7 @@ def pad_vol_patches(list_tensor):
 
     return list_tensor
 
-def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0,,Rec_dir=False):
+def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0,Rec_dir=False):
     """
 
     :param list_files:
@@ -670,4 +670,3 @@ class CustomDataset_Test(Dataset):
         return  original, img_size_o, title
 
 
-def create_test_list_from_dir(path_to_dir):

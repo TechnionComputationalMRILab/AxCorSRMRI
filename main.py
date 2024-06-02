@@ -646,7 +646,7 @@ def Reload_trained_model(config):
     generator.load_state_dict(checkpoint["Generator"], strict=config.strict)
 
     return generator
-def reconstracted_volumes(args):
+def reconstract_SR_volumes_in_folder(args):
     config = {}
     config.save_tensor = args.save_tensor
     config.save_nifti = args.save_nifti

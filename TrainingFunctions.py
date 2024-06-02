@@ -942,10 +942,11 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
                 temp_file_sr_weight = []
                 temp_file_lr_avg = []
                 temp_file_lr_weight = []
+
             sample_num = lr_tot.size()[0]
 
             for i in range(sample_num):
-                index = index*sample_num + i
+                index_ = index*sample_num + i
                 lr = lr_tot[i]
 
                 size_lr = [size_lr_tot[-2][i], size_lr_tot[-1][i]]
@@ -1007,7 +1008,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
 
                     #rec_sr_tot.append(rec_sr)
 
-                    visualize_Multi_slice_test(lr, sr, result_dir,'compare'+list(slice_title)[0], index)
+                    visualize_Multi_slice_test(lr, sr, result_dir,'compare'+list(slice_title)[0], test_=True)
 
                     lr_0 =  lr[:patch_amount,:,0,:,:].detach()
                     lr_0_rec = recon_im_torch_rectangle_gaus(lr_0.squeeze(), int(size_lr[0]), int(size_lr[1]), calculate_overlap(int(size_lr[0]),patch_size),
@@ -1115,8 +1116,6 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
         if slice_title[0].split('_slice')[0] != temp_title:
             # print ("Temp file - {}\n slice title - {}".format(temp_title,slice_title[0].split('_slice')[0]))
             # print("Enter SR vol save")
-            print("temp_file_sr_weight - {}".format(temp_file_sr_weight))
-            print("temp_file_lr_weight - {}".format(temp_file_lr_weight))
             temp_file_sr_weight_ = torch.stack(temp_file_sr_weight)
 
             temp_file_lr_weight_ = torch.stack(temp_file_lr_weight)
@@ -1137,10 +1136,12 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
             temp_file_sr_weight = []
             temp_file_lr_avg = []
             temp_file_lr_weight = []
+
+
         sample_num = lr_tot.size()[0]
 
         for i in range(sample_num):
-            index = index * sample_num + i
+            index_ = index * sample_num + i
             lr = lr_tot[i]
 
             size_lr = [size_lr_tot[-2][i], size_lr_tot[-1][i]]
@@ -1164,16 +1165,9 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
                                                      calculate_overlap(int(size_lr[0]), config.patch_size),
                                                      calculate_overlap(int(size_lr[1]), config.patch_size),
                                                      device=config.device).squeeze(0).squeeze(0).float().detach().cpu()
-            # if lr_1_rec.shape[-1] == 320:
-            #     print(slice_title)
-            temp_file_lr_weight.append(lr_1_rec)
-            rec_mid = pad_to_max_size(lr_1_rec, max_size_lr).detach().cpu()
-            # print(size_lr_tot)
-            # print(lr_1_rec.shape)
-            # rec_mid = pad_and_resize(lr_1_rec, [240, 240])
-            rec_mid_tot.append(rec_mid)
 
-            rec_mid_tot_max_size.append(pad_to_max_size(lr_1_rec, max_size_hr))
+            temp_file_lr_weight.append(lr_1_rec)
+
 
             rec_sr = recon_im_torch_rectangle_gaus(sr.squeeze(), int(size_lr[0]), int(size_lr[1]),
                                                    calculate_overlap(int(size_lr[0]), config.patch_size),
@@ -1181,31 +1175,26 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
                                                    device=config.device).squeeze(0).squeeze(0).float().detach().cpu()
             # rec_sr_resize = pad_and_resize(rec_sr,[240,240])
             temp_file_sr_weight.append(rec_sr)
-            rec_sr_resize = pad_to_max_size(rec_sr, max_size_lr).detach().cpu()
-            rec_sr_tot.append(rec_sr_resize)
 
-            rec_sr_tot_max_size.append(pad_to_max_size(rec_sr, max_size_hr))
-            # temp_file_sr_weight.append(rec_sr_resize)
 
-            # rec_mid_avg = pad_and_resize(lr_1_rec_avg, [240, 240])
 
-            
 
-    print("temp_file_sr_weight - {}".format(temp_file_sr_weight))
-    print("temp_file_lr_weight - {}".format(temp_file_lr_weight))
+
+
+
     temp_file_sr_weight_ = torch.stack(temp_file_sr_weight)
 
     temp_file_lr_weight_ = torch.stack(temp_file_lr_weight)
 
     if config.save_tensor:
         # print(temp_file_sr_weight_.shape)
-        save_tensor(temp_file_sr_weight_, "SR", temp_title, result_dir_for_tensors)
-        save_tensor(temp_file_lr_weight_, "LR", temp_title, result_dir_for_tensors)
+        save_tensor(temp_file_sr_weight_, "SR", temp_title, config.result_dir)
+        save_tensor(temp_file_lr_weight_, "LR", temp_title,  config.result_dir)
 
     if config.save_nifti:
         # print(temp_file_sr_weight_.shape)
         # temp_title_ = temp_title + "_SR"
-        save_tensor_to_img(temp_file_sr_weight_, result_dir_for_tensors, temp_title)
+        save_tensor_to_img(temp_file_sr_weight_, config.result_dir, temp_title)
 
 
 class AverageMeter(object):
