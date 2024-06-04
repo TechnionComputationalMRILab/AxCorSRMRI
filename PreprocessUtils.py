@@ -113,15 +113,15 @@ def CreateDateBase(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,te
         files.sort()
         for file in files:
             if "nii.gz" in file:
-                print(file)
+
                 subdir_new = subdir
                 file_prifix = file.split("_")[0]+"_"+file.split("_")[1]
 
                 if file_prifix not in list_of_files:
-                    print(file_prifix)
+
                     list_of_files.append(file_prifix)
                 if "isotropic" in file:
-                    print("Enter Iso")
+
                     data_types_mapping["isotropic_coronal"].append(file)
 
 
@@ -131,7 +131,7 @@ def CreateDateBase(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,te
                 #         data_types_mapping["hr_coronal"].append(file)
                 # else:
                 elif "Cor" in file or "COR" in file or "cor" in file or (cor_prefix!=None and cor_prefix in file):
-                        print("Enter Cor")
+
                         data_types_mapping["hr_coronal"].append(file)
                 # if len(ax_prefix)>0:
                 #     if ax_prefix in file:
@@ -139,15 +139,15 @@ def CreateDateBase(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,te
                 #         data_types_mapping["hr_axial"].append(file)
                 else:
                     if "Ax" in file or "AX" in file or "ax" in file or (ax_prefix!=None and ax_prefix in file):
-                        print("Enter Ax")
+
                         data_types_mapping["hr_axial"].append(file)
 
 
 
 
 
-    print(list_of_files)
-    print(data_types_mapping)
+
+
     df = pd.DataFrame(data_types_mapping, index=list_of_files)
     df = df.iloc[np.random.permutation(len(df))]
     train_size = round(len(df)*train_frac)

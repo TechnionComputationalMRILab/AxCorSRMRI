@@ -5,32 +5,38 @@ Self-Supervised Realistic Through-Plane MRI Super Resolution from Clinical 2D Ax
 ## Instruction 
 
 **A full example can be seen in `sample.ipynb`**.
-
-- First create isotropicaly resampled coronal data.  
+- Organize Your Data: Start by making sure your Axial and Coronal files for each case 
+share the same case ID at the beginning of their filenames. For instance, both Axial and 
+Coronal files for a case numbered "001" should begin with "001". For example: 001_ax.nii.gz and 001_cor.nii.gz.
+- Preprocess the data: For model input resample the coronal data isotropically.  
 ```
 path_to_data_files = "/path/to/data/"
 coronal_files_prefix = None # not mandatory
 ResampleCases(path_dir = path_to_data_files ,prefix = coronal_files_prefix)
 ```
-- Create .csv file database with the coronal axial and isotropical files. 
+- Create a Database: Make a CSV file that acts as a database. Include the file paths for the coronal, axial, and isotropic files.
 ```
 path_to_data_files = "/path/to/data/"
 CreateDateBase(path_to_data_files,cor_prefix=None,ax_prefix=None,train_frac=0.8,test_frac=0.1,num_folds = 1)
 ```
-- Define main parameters and  model parameters. Explanation on the possible parameters can be found at `parameter_dictionary.txt`.    
+- Set the main framework and  model hyperparameters . For detailed explanations of each parameter, 
+check the parameter_dictionary.txt file. The default training parameters are already established in setup_parser().        
 ```
 override_args = {
     "path_to_set":"/tcmldrive/shared/RambamMRE082022/new2/",
     "path_to_results":"/argusdata/users/jenny075/JennySh/results/",
     "batch_size":12,
     "gpu_device":"0,1",
-    "amount_of_slices":3,
     }
 parser = setup_parser()
 args, _ = parser.parse_known_args([])
 vars(args).update(override_args)
 ```
-- Create the datasets
+- Prepare Your Data for Training: To get your data ready for training your model, you'll need to create three sets:
+  - Training Set: This is the largest part of your data and is used to teach your model.
+  - Validation Set: This set helps you fine-tune your model's performance during training without overfitting.
+  - Test Set: After training, you'll use this set to check how well your model performs on new, unseen data.
+
 ```
 dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,config  = Data_Inittializaion(args)
 ```
@@ -38,13 +44,15 @@ dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,confi
 ```
 training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,config)
 ```
-- If you already have trained model and you went to apply it on all the files in the folder
+- If you've got a trained model and want to use it on all the files in a folder,
+making sure they're isotropically resampled 
 ```
 override_args_test = {
     "path_to_set":"/tcmldrive/shared/RambamMRE082022/new2/",
     "path_to_results":"/argusdata/users/jenny075/JennySh/results/",
+    "path_to_trained_model":"/argusdata/users/jenny075/JennySh/results/Test_03_06_2024_22_21/Saved/FID/best.pth",
     "gpu_device":"0,1",
-    "title":"Test",
+    "title":"Rec_all_files",
 }
 
 parser = setup_parser_test()

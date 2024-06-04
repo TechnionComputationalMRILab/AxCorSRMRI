@@ -848,7 +848,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
                 temp_title = slice_title[0].split('_slice')[0]
 
             if slice_title[0].split('_slice')[0] != temp_title:
-
+                print()
                 temp_file_hr_weight_ = torch.stack(temp_file_hr_weight)
 
                 if config.save_tensor:
@@ -901,7 +901,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
             save_tensor(temp_file_hr_weight_, "HR",  temp_title, result_dir_for_tensors)
 
 
-        print("rec_hr_tot len - {} ".format(len(rec_hr_tot)))
+
         temp_file_sr_avg =[]
         temp_file_sr_weight=[]
         temp_file_lr_avg =[]
@@ -918,10 +918,9 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
                 temp_title = slice_title[0].split('_slice')[0]
             #print(temp_title)
             if slice_title[0].split('_slice')[0] != temp_title:
+
                 # print ("Temp file - {}\n slice title - {}".format(temp_title,slice_title[0].split('_slice')[0]))
                 # print("Enter SR vol save")
-                print("temp_file_sr_weight - {}".format(temp_file_sr_weight))
-                print("temp_file_lr_weight - {}".format(temp_file_lr_weight))
                 temp_file_sr_weight_ = torch.stack(temp_file_sr_weight)
 
                 temp_file_lr_weight_ = torch.stack(temp_file_lr_weight)
@@ -938,98 +937,94 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
                     # temp_title_ = temp_title + "_SR"
                     save_tensor_to_img(temp_file_sr_weight_, result_dir_for_tensors, temp_title)
                 temp_title = slice_title[0].split('_slice')[0]
-                temp_file_sr_avg = []
                 temp_file_sr_weight = []
-                temp_file_lr_avg = []
                 temp_file_lr_weight = []
 
             sample_num = lr_tot.size()[0]
 
-            for i in range(sample_num):
-                index_ = index*sample_num + i
-                lr = lr_tot[i]
+            lr = lr_tot[0]
 
-                size_lr = [size_lr_tot[-2][i], size_lr_tot[-1][i]]
+            size_lr = [size_lr_tot[-2][0], size_lr_tot[-1][0]]
 
-                patch_amount = size_lr_tot[0][i]
-                title = str(slice_title[i])
+            patch_amount = size_lr_tot[0]
+            title = str(slice_title[0])
 
-                lr = torch.unsqueeze(torch.squeeze(lr), dim=1)
-                lr = lr.to(config.device, non_blocking=True)
-                middle = lr[:patch_amount,:,1,:,:].detach().float()
-                # Mixed precision
-                # with amp.autocast():
-                #sr = model(lr).float()
+            lr = torch.unsqueeze(torch.squeeze(lr), dim=1)
+            lr = lr.to(config.device, non_blocking=True)
+            middle = lr[:patch_amount,:,1,:,:].detach().float()
+            # Mixed precision
+            # with amp.autocast():
+            #sr = model(lr).float()
 
-                sr = model(lr.squeeze()).float()
-                sr = torch.clamp(sr,min=0,max=1)
-                sr = sr.squeeze(dim=2)[:patch_amount]
-                # print(sr.shape)
+            sr = model(lr.squeeze()).float()
+            sr = torch.clamp(sr,min=0,max=1)
+            sr = sr.squeeze(dim=2)[:patch_amount]
+            # print(sr.shape)
 
-                lr_1_rec = recon_im_torch_rectangle_gaus(middle.squeeze(), int(size_lr[0]), int(size_lr[1]),
-                                                               calculate_overlap(int(size_lr[0]), patch_size),
-                                                               calculate_overlap(int(size_lr[1]), patch_size),
-                                                               device = config.device).squeeze(0).squeeze(0).float().detach().cpu()
-                # if lr_1_rec.shape[-1] == 320:
-                #     print(slice_title)
-                temp_file_lr_weight.append(lr_1_rec)
-                rec_mid = pad_to_max_size(lr_1_rec, max_size_lr).detach().cpu()
-                # print(size_lr_tot)
-                # print(lr_1_rec.shape)
-                # rec_mid = pad_and_resize(lr_1_rec, [240, 240])
-                rec_mid_tot.append(rec_mid)
+            lr_1_rec = recon_im_torch_rectangle_gaus(middle.squeeze(), int(size_lr[0]), int(size_lr[1]),
+                                                           calculate_overlap(int(size_lr[0]), patch_size),
+                                                           calculate_overlap(int(size_lr[1]), patch_size),
+                                                           device = config.device).squeeze(0).squeeze(0).float().detach().cpu()
+            # if lr_1_rec.shape[-1] == 320:
+            #     print(slice_title)
+            temp_file_lr_weight.append(lr_1_rec)
+            rec_mid = pad_to_max_size(lr_1_rec, max_size_lr).detach().cpu()
+            # print(size_lr_tot)
+            # print(lr_1_rec.shape)
+            # rec_mid = pad_and_resize(lr_1_rec, [240, 240])
 
-                rec_mid_tot_max_size.append(pad_to_max_size(lr_1_rec, max_size_hr))
+            rec_mid_tot.append(rec_mid)
 
-
-                rec_sr = recon_im_torch_rectangle_gaus(sr.squeeze(), int(size_lr[0]), int(size_lr[1]),
-                                                             calculate_overlap(int(size_lr[0]), patch_size),
-                                                             calculate_overlap(int(size_lr[1]), patch_size),
-                                                               device = config.device).squeeze(0).squeeze(0).float().detach().cpu()
-                # rec_sr_resize = pad_and_resize(rec_sr,[240,240])
-                temp_file_sr_weight.append(rec_sr)
-                rec_sr_resize = pad_to_max_size(rec_sr, max_size_lr).detach().cpu()
-                rec_sr_tot.append(rec_sr_resize)
-
-                rec_sr_tot_max_size.append(pad_to_max_size(rec_sr, max_size_hr))
-                #temp_file_sr_weight.append(rec_sr_resize)
-
-                # rec_mid_avg = pad_and_resize(lr_1_rec_avg, [240, 240])
+            rec_mid_tot_max_size.append(pad_to_max_size(lr_1_rec, max_size_hr))
 
 
+            rec_sr = recon_im_torch_rectangle_gaus(sr.squeeze(), int(size_lr[0]), int(size_lr[1]),
+                                                         calculate_overlap(int(size_lr[0]), patch_size),
+                                                         calculate_overlap(int(size_lr[1]), patch_size),
+                                                           device = config.device).squeeze(0).squeeze(0).float().detach().cpu()
+            # rec_sr_resize = pad_and_resize(rec_sr,[240,240])
+            temp_file_sr_weight.append(rec_sr)
+            rec_sr_resize = pad_to_max_size(rec_sr, max_size_lr).detach().cpu()
+            rec_sr_tot.append(rec_sr_resize)
 
-                if index %config.image_save_freq_batch == 0  :
+            rec_sr_tot_max_size.append(pad_to_max_size(rec_sr, max_size_hr))
+            #temp_file_sr_weight.append(rec_sr_resize)
 
-                    rec_hr = recon_im_torch_rectangle_gaus(hr, int(size_hr[0]), int(size_hr[1]), calculate_overlap(int(size_hr[0]),patch_size)
-                                                           , calculate_overlap(int(size_hr[1]),patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
-                    if np.isnan(rec_hr).any():
-                        print("NAN")
-                    #rec_hr_tot.append(rec_hr)
+            # rec_mid_avg = pad_and_resize(lr_1_rec_avg, [240, 240])
 
-                    #rec_sr_tot.append(rec_sr)
 
-                    visualize_Multi_slice_test(lr, sr, result_dir,'compare'+list(slice_title)[0], test_=True)
 
-                    lr_0 =  lr[:patch_amount,:,0,:,:].detach()
-                    lr_0_rec = recon_im_torch_rectangle_gaus(lr_0.squeeze(), int(size_lr[0]), int(size_lr[1]), calculate_overlap(int(size_lr[0]),patch_size),
-                                                             calculate_overlap(int(size_lr[1]),patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
-                    lr_2 =  lr[:patch_amount,:,2,:,:].detach()
-                    lr_2_rec = recon_im_torch_rectangle_gaus(lr_2.squeeze(), int(size_lr[0]), int(size_lr[1]), calculate_overlap(int(size_lr[0]),patch_size),
-                                                             calculate_overlap(int(size_lr[1]),patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
+            if index %config.image_save_freq_batch == 0  :
 
-                    visualize_reconstrated(lr_0_rec, lr_1_rec, lr_2_rec, rec_sr,result_dir,  'compare'+list(slice_title)[0], True)
+                rec_hr = recon_im_torch_rectangle_gaus(hr, int(size_hr[0]), int(size_hr[1]), calculate_overlap(int(size_hr[0]),patch_size)
+                                                       , calculate_overlap(int(size_hr[1]),patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
+                if np.isnan(rec_hr).any():
+                    print("NAN")
+                #rec_hr_tot.append(rec_hr)
 
-                    rec_hr = recon_im_torch_rectangle_gaus(hr, int(size_hr[0]), int(size_hr[1]),
-                                                                 calculate_overlap(int(size_hr[0]), patch_size),
-                                                                 calculate_overlap(int(size_hr[1]), patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
-                    if np.isnan(rec_hr).any():
-                        print("NAN")
-                    # rec_hr_tot.append(rec_hr)
+                #rec_sr_tot.append(rec_sr)
 
-                    # rec_sr_tot.append(rec_sr)
+                visualize_Multi_slice_test(lr, sr, result_dir,'compare'+list(slice_title)[0], test_=True)
 
-        print("temp_file_sr_weight - {}".format(temp_file_sr_weight))
-        print("temp_file_lr_weight - {}".format(temp_file_lr_weight))
+                lr_0 =  lr[:patch_amount,:,0,:,:].detach()
+                lr_0_rec = recon_im_torch_rectangle_gaus(lr_0.squeeze(), int(size_lr[0]), int(size_lr[1]), calculate_overlap(int(size_lr[0]),patch_size),
+                                                         calculate_overlap(int(size_lr[1]),patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
+                lr_2 =  lr[:patch_amount,:,2,:,:].detach()
+                lr_2_rec = recon_im_torch_rectangle_gaus(lr_2.squeeze(), int(size_lr[0]), int(size_lr[1]), calculate_overlap(int(size_lr[0]),patch_size),
+                                                         calculate_overlap(int(size_lr[1]),patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
+
+                visualize_reconstrated(lr_0_rec, lr_1_rec, lr_2_rec, rec_sr,result_dir,  'compare'+list(slice_title)[0], True)
+
+                rec_hr = recon_im_torch_rectangle_gaus(hr, int(size_hr[0]), int(size_hr[1]),
+                                                             calculate_overlap(int(size_hr[0]), patch_size),
+                                                             calculate_overlap(int(size_hr[1]), patch_size), device = config.device).detach().cpu().squeeze(0).squeeze(0)
+                if np.isnan(rec_hr).any():
+                    print("NAN")
+                # rec_hr_tot.append(rec_hr)
+
+                # rec_sr_tot.append(rec_sr)
+
+
         temp_file_sr_weight_ = torch.stack(temp_file_sr_weight)
 
         temp_file_lr_weight_ = torch.stack(temp_file_lr_weight)
@@ -1086,30 +1081,30 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
 
 
 def reconstract_SR_volumes(model,valid_dataloader_lr,config):
-    with torch.no_grad():
-        end = time.time()
 
-        for _, (lr, size_lr, title) in enumerate(valid_dataloader_lr):
-            if lr.size()[0] == 1:
-                if int(size_lr[-1]) >= max_size_lr[1] and int(size_lr[-2]) >= max_size_lr[0]:
-                    max_size_lr = [int(size_lr[-2]), int(size_lr[-1])]
-                if size_lr[0] > max_patches_lr:
-                    max_patches_lr = size_lr[0]
-            else:
-                max_1 = int(torch.max(size_lr[-1]))
-                max_0 = int(torch.max(size_lr[-2]))
-                max_p = int(torch.max(size_lr[0]))
-                if max_1 >= max_size_lr[1] and max_0 >= max_size_lr[0]:
-                    max_size_lr = [max_0, max_1]
-                if max_p > max_patches_lr:
-                    max_patches_lr = max_p
-
+    temp_file_sr_weight = []
+    temp_file_lr_weight= []
+    model.eval()
     for index, (lr_tot, size_lr_tot, slice_title) in enumerate(valid_dataloader_lr):
         # print(slice_title)
         # if size_lr_tot[-1] == 320:
         # print("320")
         # print(slice_title)
+        print("lr_tot brfore changes {}".format(lr_tot.shape))
+        print ("size_lr_tot[0] {}".format(size_lr_tot[0].item()))
+        patch_amount = size_lr_tot[0].item()
+        lr = lr_tot[:patch_amount]
 
+        size_lr = [size_lr_tot[-2], size_lr_tot[-1]]
+        print(size_lr)
+        print(slice_title)
+        print("size_lr_tot {}".format(size_lr_tot))
+        print("lr {}".format(lr.shape))
+        print("size_lr_tot {}".format(size_lr_tot))
+        #patch_amount = size_lr_tot[0]
+        #lr = lr_tot[:patch_amount, :, 1, :, :]
+
+        #size_lr = [size_lr_tot[-2][0], size_lr_tot[-1][0]]
         if index == 0:
             temp_title = slice_title[0].split('_slice')[0]
         # print(temp_title)
@@ -1131,6 +1126,7 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
                 # print(temp_file_sr_weight_.shape)
                 # temp_title_ = temp_title + "_SR"
                 save_tensor_to_img(temp_file_sr_weight_, config.result_dir, temp_title)
+
             temp_title = slice_title[0].split('_slice')[0]
             temp_file_sr_avg = []
             temp_file_sr_weight = []
@@ -1138,43 +1134,41 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
             temp_file_lr_weight = []
 
 
-        sample_num = lr_tot.size()[0]
-
-        for i in range(sample_num):
-            index_ = index * sample_num + i
-            lr = lr_tot[i]
-
-            size_lr = [size_lr_tot[-2][i], size_lr_tot[-1][i]]
-
-            patch_amount = size_lr_tot[0][i]
-            title = str(slice_title[i])
-
-            lr = torch.unsqueeze(torch.squeeze(lr), dim=1)
-            lr = lr.to(config.device, non_blocking=True)
-            middle = lr[:patch_amount, :, 1, :, :].detach().float()
-            # Mixed precision
-            # with amp.autocast():
-            # sr = model(lr).float()
-
-            sr = model(lr.squeeze()).float()
-            sr = torch.clamp(sr, min=0, max=1)
-            sr = sr.squeeze(dim=2)[:patch_amount]
-            # print(sr.shape)
-
-            lr_1_rec = recon_im_torch_rectangle_gaus(middle.squeeze(), int(size_lr[0]), int(size_lr[1]),
-                                                     calculate_overlap(int(size_lr[0]), config.patch_size),
-                                                     calculate_overlap(int(size_lr[1]), config.patch_size),
-                                                     device=config.device).squeeze(0).squeeze(0).float().detach().cpu()
-
-            temp_file_lr_weight.append(lr_1_rec)
 
 
-            rec_sr = recon_im_torch_rectangle_gaus(sr.squeeze(), int(size_lr[0]), int(size_lr[1]),
-                                                   calculate_overlap(int(size_lr[0]), config.patch_size),
-                                                   calculate_overlap(int(size_lr[1]), config.patch_size),
-                                                   device=config.device).squeeze(0).squeeze(0).float().detach().cpu()
-            # rec_sr_resize = pad_and_resize(rec_sr,[240,240])
-            temp_file_sr_weight.append(rec_sr)
+
+        #patch_amount = size_lr_tot[0][0]
+        title = str(slice_title[0])
+
+        lr = torch.unsqueeze(torch.squeeze(lr), dim=1)
+        print("lr.shape after changes{}".format(lr.shape))
+        lr = lr.to(config.device, non_blocking=True)
+        middle = lr[:, :, 1, :, :].detach().float()
+        #middle = lr[:patch_amount, :, 1, :, :].detach().float()
+        # Mixed precision
+        # with amp.autocast():
+        # sr = model(lr).float()
+
+        sr = model(lr.squeeze()).detach().float()
+        sr = torch.clamp(sr, min=0, max=1)
+        #sr = sr.squeeze(dim=2)[:patch_amount]
+        sr = sr.squeeze(dim=2)[:patch_amount]
+        # print(sr.shape)
+
+        lr_1_rec = recon_im_torch_rectangle_gaus(middle.squeeze(), int(size_lr[0]), int(size_lr[1]),
+                                                 calculate_overlap(int(size_lr[0]), config.patch_size),
+                                                 calculate_overlap(int(size_lr[1]), config.patch_size),
+                                                 device=config.device).squeeze(0).squeeze(0).float().detach().cpu()
+
+        temp_file_lr_weight.append(lr_1_rec)
+
+
+        rec_sr = recon_im_torch_rectangle_gaus(sr.squeeze(), int(size_lr[0]), int(size_lr[1]),
+                                               calculate_overlap(int(size_lr[0]), config.patch_size),
+                                               calculate_overlap(int(size_lr[1]), config.patch_size),
+                                               device=config.device).squeeze(0).squeeze(0).float().detach().cpu()
+        # rec_sr_resize = pad_and_resize(rec_sr,[240,240])
+        temp_file_sr_weight.append(rec_sr)
 
 
 

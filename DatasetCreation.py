@@ -223,11 +223,12 @@ def create_patch_list(list_files,max_patches,num_of_consecutive_slices,train = F
 
     if Rec_dir :
         for j in range(len(list_files)):
-            temp_list_1 = return_list_of_valuble_slices(list_files[j][0], num_of_consecutive_slices)
+
+            temp_list_1 = return_list_of_valuble_slices(list_files[j], num_of_consecutive_slices)
             total_1 += len(temp_list_1)
             coustom_slices_1.extend(temp_list_1)
         random.shuffle(coustom_slices_1)
-        coustom_slices = [coustom_slices_1]
+        coustom_slices = coustom_slices_1
         return coustom_slices
     else:
         for j in range(len(list_files)):
@@ -403,7 +404,7 @@ def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0,Re
         return [[], []], {}
     if Rec_dir:
         for j in range(len(list_files)):
-            temp_volume = load_nifti_image(list_files[j][0], 'nifti')
+            temp_volume = load_nifti_image(list_files[j], 'nifti')
 
             temp_volume, _ = extract_patches_with_volume(temp_volume, patch_size)
             if not train:
@@ -411,9 +412,9 @@ def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0,Re
                 list_LR_tensor.append([split_volume, img_size])
             else:
                 list_LR_tensor.append(temp_volume)
-            file_to_idx[list_files[j][0]] = j
+            file_to_idx[list_files[j]] = j
             list_LR_tensor = pad_vol_patches(list_LR_tensor)
-        return [list_LR_tensor], file_to_idx
+        return list_LR_tensor, file_to_idx
     else:
         for j in range(len(list_files)):
             temp_volume = load_nifti_image(list_files[j][0], 'nifti')
@@ -437,6 +438,7 @@ def create_patch_list_and_volume_list(list_files,train = False,patch_size = 0,Re
         if not train:
             list_LR_tensor = pad_vol_patches(list_LR_tensor)
             list_HR_tensor = pad_vol_patches(list_HR_tensor)
+
 
     return [list_LR_tensor, list_HR_tensor], file_to_idx
 
@@ -547,10 +549,11 @@ def make_list_to_reconstract(config):
     for subdir, dirs, files in os.walk(config.path_to_set):
         for file in files:
             if "isotropic" in file:
-                list_of_files.append(file)
+                path_to_file = os.path.join(config.path_to_set,file)
+                list_of_files.append(path_to_file)
 
     list_test_slices = create_patch_list(list_of_files, 0, config.num_of_consecutive_slices, patch_size=config.patch_size,Rec_dir=True)
-    list_test_volume, test_file_to_idx = create_patch_list_and_volume_list(list_test_slices, train=False,
+    list_test_volume, test_file_to_idx = create_patch_list_and_volume_list(list_of_files, train=False,
                                                                            patch_size=config.patch_size,Rec_dir=True)
     return list_test_slices,list_test_volume,test_file_to_idx
 
@@ -648,7 +651,6 @@ class CustomDataset_Test(Dataset):
     def __getitem__(self, idx):
         # Create an iterator
         lim = int(self.slices/2)
-
         file, ind, _ ,img_size = self.list_slices[idx]
 
         file_idx = self.file_to_idx[file]

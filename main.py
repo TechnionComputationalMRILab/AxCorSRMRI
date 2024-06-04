@@ -42,28 +42,28 @@ def setup_parser():
     parser.add_argument('--title', default=None, type=str)
     parser.add_argument('--data_type', default="nifti", type=str)
     parser.add_argument('--gpu_device', default=None,type=str)
-    parser.add_argument('--loss', default='rel', type=str)
+    parser.add_argument('--loss', default='L2', type=str)
     parser.add_argument('--cross_validation_fold', default=None, type=int)
     parser.add_argument('--patch_size', default=64, type=int)
-    parser.add_argument('--epochs', default=None, type=int)
+    parser.add_argument('--epochs', default=1000, type=int)
     parser.add_argument('--scheduler', default='const', type=str,choices=['const', 'Plateau', 'Multiplicative'])
-    parser.add_argument('--lr_g', default=None, type=float)
-    parser.add_argument('--lr_d', default=None, type=float)
-    parser.add_argument('--max_workers_train', default=2, type=int)
-    parser.add_argument('--max_workers_valid', default=2, type=int)
-    parser.add_argument('--val_epoch', default=None, type=int)
-    parser.add_argument('--random_patches', default=False, type=bool)
-    parser.add_argument('--adversarial_weight_I', default=None, type=float)
-    parser.add_argument('--adversarial_weight_E', default=None, type=float)
+    parser.add_argument('--lr_g', default=0.0001, type=float)
+    parser.add_argument('--lr_d', default=0.0001, type=float)
+    parser.add_argument('--max_workers_train', default=12, type=int)
+    parser.add_argument('--max_workers_valid', default=10, type=int)
+    parser.add_argument('--val_epoch', default=50, type=int)
+    parser.add_argument('--random_patches', default=True, type=bool)
+    parser.add_argument('--adversarial_weight_I', default=0.02, type=float)
+    parser.add_argument('--adversarial_weight_E', default=0.02, type=float)
     parser.add_argument('--set_seed', default=24, type=int)
-    parser.add_argument('--d_optimizer_step_size', default=None, type=int)
-    parser.add_argument('--g_optimizer_step_size', default=None, type=int)
+    parser.add_argument('--d_optimizer_step_size', default=4000, type=int)
+    parser.add_argument('--g_optimizer_step_size', default=16000, type=int)
     parser.add_argument('--image_save_freq_batch', default=100, type=int)
     parser.add_argument('--image_save_freq_epoch', default=100, type=int)
     parser.add_argument('--cheakpoint_epoch', default=[], type=int,nargs='*')
     parser.add_argument('--transfer_learning', default=False, type=bool)
-    parser.add_argument('--save_tensor',  default=False, type=bool)
-    parser.add_argument('--save_nifti',  default=False, type=bool)
+    parser.add_argument('--save_tensor',  default=True, type=bool)
+    parser.add_argument('--save_nifti',  default=True, type=bool)
     return parser
 
 
@@ -78,7 +78,7 @@ def setup_parser_test():
     parser.add_argument('--save_nifti', default=False, type=bool)
     parser.add_argument('--gpu_device' , default=None, type=int)
     parser.add_argument('--patch_size', default=48, type=int)
-    parser.add_argument('--batch_size', default=40, type=int)
+    parser.add_argument('--batch_size', default=1, type=int)
     parser.add_argument('--consecutive_slices', default=3, type=int)
     parser.add_argument('--max_workers_test', default=12, type=int)
     return parser
@@ -246,7 +246,8 @@ def Data_Inittializaion (args):
                                      config.amount_of_slices,max_slices=None \
                                      ,  patch_size=config.patch_size,
                                      fold=config.cross_validation_fold)
-
+        print(test_list[0])
+        print(test_list[1])
         with open(os.path.join(result_dir ,"train_list.json"), "w") as fp:
             json.dump(train_list, fp)
 
@@ -311,14 +312,14 @@ def Data_Inittializaion (args):
 
 
     dataset_test_lr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(test_list[0]),lr=True,file_type =  config.data_type,
-                batch = valid_batch,patch_size=config.patch_size,use_db=config.use_db,
+                batch = 1,patch_size=config.patch_size,use_db=config.use_db,
                                                            list_volumes=list_test_volume[0], file_to_idx=test_file_to_idx )
-    dl_test_lr = torch.utils.data.DataLoader(dataset=dataset_test_lr, batch_size=valid_batch,
+    dl_test_lr = torch.utils.data.DataLoader(dataset=dataset_test_lr, batch_size=1,
                                            num_workers=args.max_workers_valid,prefetch_factor=4)
     dataset_test_hr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(test_list[1]),lr=False,file_type =  config.data_type
-                ,batch = valid_batch, patch_size=config.patch_size,use_db=config.use_db,
+                ,batch = 1, patch_size=config.patch_size,use_db=config.use_db,
                                                                   list_volumes=list_test_volume[1], file_to_idx=test_file_to_idx)
-    dl_test_hr = torch.utils.data.DataLoader(dataset=dataset_test_hr, batch_size=valid_batch,
+    dl_test_hr = torch.utils.data.DataLoader(dataset=dataset_test_hr, batch_size=1,
                                            num_workers=args.max_workers_valid,prefetch_factor=4)
 
 
@@ -624,6 +625,8 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         csvwriter.writerows(list_results)
     print(list_results)
 
+    print("Finish testing")
+
     return
 
 def Reload_trained_model(config):
@@ -647,36 +650,48 @@ def Reload_trained_model(config):
 
     return generator
 def reconstract_SR_volumes_in_folder(args):
-    config = {}
-    config.save_tensor = args.save_tensor
-    config.save_nifti = args.save_nifti
+
+    config.save_tensor=args.save_tensor
+    config.save_nifti= args.save_nifti
     config.path_to_set = args.path_to_set
+    config.path_to_trained_model = args.path_to_trained_model
     config.path = args.path_to_results
     config.patch_size = args.patch_size
-    config.batch_size = args.batch_size
-    config.path_to_trained_model = args.path_to_trained_model
-    config.max_workers_test = args.max_workers_test
-    config.consecutive_slices = args.consecutive_slices
+    config.batch_size= args.batch_size
+
+    config.max_workers_test= args.max_workers_test
+    config.num_of_consecutive_slices = args.consecutive_slices
+    # config.title_":""})
+    # config.multi_gpu":""})
+    # config.use_multi_gpu":False})
+    print(config)
     time_str = time.strftime("_%d_%m_%Y_%H_%M")
     config.title_ = str(args.title) + str(time_str)
+    result_dir = os.path.join(config.path,config.title_)
+    os.makedirs(result_dir, exist_ok=True)
+    config.result_dir = result_dir
+    config.use_multi_gpu = False
     if args.gpu_device is not None:
         config.multi_gpu = [int(elem) for elem in args.gpu_device.split(',')]
         if len(config.multi_gpu) > 1:
             config.use_multi_gpu = True
+
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_device)
-    print("config.multi_gpu - ",config.multi_gpu)
+    print("config.multi_gpu - ", config.multi_gpu)
+    print("config.use_multi_gpu {}".format(config.use_multi_gpu))
+
     # Create a folder of super-resolution experiment results
     print("gpu available:", torch.cuda.is_available())
     if torch.cuda.is_available():
         print('gpu count:', str(torch.cuda.device_count()))
 
     list_test_slices,list_test_volume,test_file_to_idx = make_list_to_reconstract(config)
-    istropic_dataset = DatasetCreation.CustomDataset_Test(slices=config.amount_of_slices, file_list=list_test_slices,
+    istropic_dataset = DatasetCreation.CustomDataset_Test(slices=config.num_of_consecutive_slices, file_list=sorted(list_test_slices),
                                                        lr=True, file_type='nifti',
                                                        batch=config.batch_size, patch_size=config.patch_size,
                                                        use_db=True,
                                                        list_volumes=list_test_volume, file_to_idx=test_file_to_idx)
     isotropic_dataloader = torch.utils.data.DataLoader(dataset=istropic_dataset, batch_size=config.batch_size,
-                                           num_workers=args.max_workers_valid,prefetch_factor=4)
-    model = Reload_trained_model(args)
+                                           num_workers=args.max_workers_test,prefetch_factor=4)
+    model = Reload_trained_model(config)
     reconstract_SR_volumes(model,isotropic_dataloader,config)
