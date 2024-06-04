@@ -600,7 +600,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         'max_size_hr': max_size_hr}, os.path.join(result_dir, "last_save.pth"))
     print("END training")
     print('Total training time - ', time.strftime("%H:%M:%S", time.gmtime(end_all_train - start_all_train)))
-    print("Start Testing")
+    print("START testing")
     list_results = []
     temp_dict = {}
     FID_original_mean, FID_original_std, FID_original_lr_mean, FID_original_lr_std, \
@@ -625,7 +625,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         csvwriter.writerows(list_results)
     print(list_results)
 
-    print("Finish testing")
+    print("END testing")
 
     return
 
@@ -685,6 +685,7 @@ def reconstract_SR_volumes_in_folder(args):
     if torch.cuda.is_available():
         print('gpu count:', str(torch.cuda.device_count()))
 
+    print("Creating the dataset")
     list_test_slices,list_test_volume,test_file_to_idx = make_list_to_reconstract(config)
     istropic_dataset = DatasetCreation.CustomDataset_Test(slices=config.num_of_consecutive_slices, file_list=sorted(list_test_slices),
                                                        lr=True, file_type='nifti',
@@ -694,4 +695,6 @@ def reconstract_SR_volumes_in_folder(args):
     isotropic_dataloader = torch.utils.data.DataLoader(dataset=istropic_dataset, batch_size=config.batch_size,
                                            num_workers=args.max_workers_test,prefetch_factor=4)
     model = Reload_trained_model(config)
+    print("Starting SR reconstruction")
     reconstract_SR_volumes(model,isotropic_dataloader,config)
+    print("Finished SR reconstruction")

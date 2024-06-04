@@ -20,14 +20,13 @@ import General_config as config
 
 def save_tensor_to_img(tensor,path_to_save,file_path ='_' ):
     """
-
+    this function receive tensor and aves it as NIFTI file.
     :param tensor:
-    :param path_to_data:
+    :param path_to_save:
     :param path_to_save:
     :param title:
     :return:
     """
-    print(file_path)
 
     reader = sitk.ImageFileReader()
     # The option for nii images
@@ -74,7 +73,7 @@ def save_tensor(tensor,tensot_type,title,result_dir):
     :return:
     """
 
-    print(tensor.shape)
+
     title_ = title.split('.nii')[0].split("/")[-1]
     #path = result_dir + '/' + tensot_type + "_" + title_ +'.pt'
     path = os.path.join(result_dir, tensot_type + "_" + title_ +'.pt')
@@ -929,10 +928,12 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
 
                     if slice_title[0].split('_slice')[0] != temp_title :
                        # print(temp_file_sr_weight_.shape)
+                        print("Saving tensors for {} file".format(temp_title))
                         save_tensor(temp_file_sr_weight_, "SR", temp_title, result_dir_for_tensors)
                         save_tensor(temp_file_lr_weight_, "LR", temp_title, result_dir_for_tensors)
 
                 if config.save_nifti:
+                    print("Saving tensors for {} file".format(temp_title))
                     # print(temp_file_sr_weight_.shape)
                     # temp_title_ = temp_title + "_SR"
                     save_tensor_to_img(temp_file_sr_weight_, result_dir_for_tensors, temp_title)
@@ -1031,11 +1032,13 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
 
         if config.save_tensor:
             #print(temp_file_sr_weight_.shape)
+            print("Saving tensors for {} file".format(temp_title))
             save_tensor(temp_file_sr_weight_, "SR",  temp_title, result_dir_for_tensors)
             save_tensor(temp_file_lr_weight_, "LR", temp_title, result_dir_for_tensors)
 
 
         if config.save_nifti:
+            print("Saving tensors for {} file".format(temp_title))
             #print(temp_file_sr_weight_.shape)
             # temp_title_ = temp_title + "_SR"
             save_tensor_to_img(temp_file_sr_weight_,result_dir_for_tensors, temp_title )
@@ -1090,17 +1093,12 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
         # if size_lr_tot[-1] == 320:
         # print("320")
         # print(slice_title)
-        print("lr_tot brfore changes {}".format(lr_tot.shape))
-        print ("size_lr_tot[0] {}".format(size_lr_tot[0].item()))
+
         patch_amount = size_lr_tot[0].item()
-        lr = lr_tot[:patch_amount]
+        lr_tot = lr_tot[:,:patch_amount,:,:,:]
 
         size_lr = [size_lr_tot[-2], size_lr_tot[-1]]
-        print(size_lr)
-        print(slice_title)
-        print("size_lr_tot {}".format(size_lr_tot))
-        print("lr {}".format(lr.shape))
-        print("size_lr_tot {}".format(size_lr_tot))
+
         #patch_amount = size_lr_tot[0]
         #lr = lr_tot[:patch_amount, :, 1, :, :]
 
@@ -1119,12 +1117,14 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
 
                 if slice_title[0].split('_slice')[0] != temp_title:
                     # print(temp_file_sr_weight_.shape)
+                    print("Saving tensors for {} file".format(temp_title))
                     save_tensor(temp_file_sr_weight_, "SR", temp_title, config.result_dir)
                     save_tensor(temp_file_lr_weight_, "LR", temp_title, config.result_dir)
 
             if config.save_nifti:
                 # print(temp_file_sr_weight_.shape)
                 # temp_title_ = temp_title + "_SR"
+                print("Saving nifti for {} file".format(temp_title))
                 save_tensor_to_img(temp_file_sr_weight_, config.result_dir, temp_title)
 
             temp_title = slice_title[0].split('_slice')[0]
@@ -1140,16 +1140,15 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
         #patch_amount = size_lr_tot[0][0]
         title = str(slice_title[0])
 
-        lr = torch.unsqueeze(torch.squeeze(lr), dim=1)
-        print("lr.shape after changes{}".format(lr.shape))
-        lr = lr.to(config.device, non_blocking=True)
-        middle = lr[:, :, 1, :, :].detach().float()
+        lr_tot = torch.unsqueeze(torch.squeeze(lr_tot), dim=1)
+        lr_tot = lr_tot.to(config.device, non_blocking=True)
+        middle = lr_tot[:, :, 1, :, :].detach().float()
         #middle = lr[:patch_amount, :, 1, :, :].detach().float()
         # Mixed precision
         # with amp.autocast():
         # sr = model(lr).float()
 
-        sr = model(lr.squeeze()).detach().float()
+        sr = model(lr_tot.squeeze()).detach().float()
         sr = torch.clamp(sr, min=0, max=1)
         #sr = sr.squeeze(dim=2)[:patch_amount]
         sr = sr.squeeze(dim=2)[:patch_amount]
@@ -1182,12 +1181,14 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
 
     if config.save_tensor:
         # print(temp_file_sr_weight_.shape)
+        print("Saving tensors for {} file".format(temp_title))
         save_tensor(temp_file_sr_weight_, "SR", temp_title, config.result_dir)
         save_tensor(temp_file_lr_weight_, "LR", temp_title,  config.result_dir)
 
     if config.save_nifti:
         # print(temp_file_sr_weight_.shape)
         # temp_title_ = temp_title + "_SR"
+        print("Saving nifti for {} file".format(temp_title))
         save_tensor_to_img(temp_file_sr_weight_, config.result_dir, temp_title)
 
 

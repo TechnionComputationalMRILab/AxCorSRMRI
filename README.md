@@ -20,7 +20,7 @@ path_to_data_files = "/path/to/data/"
 CreateDateBase(path_to_data_files,cor_prefix=None,ax_prefix=None,train_frac=0.8,test_frac=0.1,num_folds = 1)
 ```
 - Set the main framework and  model hyperparameters . For detailed explanations of each parameter, 
-check the parameter_dictionary.txt file. The default training parameters are already established in setup_parser().        
+check the `parameter_dictionary.txt` file. The default training parameters are already established in setup_parser().        
 ```
 override_args = {
     "path_to_set":"/tcmldrive/shared/RambamMRE082022/new2/",
