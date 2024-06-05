@@ -60,7 +60,7 @@ def setup_parser():
     parser.add_argument('--g_optimizer_step_size', default=16000, type=int)
     parser.add_argument('--image_save_freq_batch', default=100, type=int)
     parser.add_argument('--image_save_freq_epoch', default=100, type=int)
-    parser.add_argument('--cheakpoint_epoch', default=[], type=int,nargs='*')
+    parser.add_argument('--checkpoint_epoch', default=[], type=int,nargs='*')
     parser.add_argument('--transfer_learning', default=False, type=bool)
     parser.add_argument('--save_tensor',  default=True, type=bool)
     parser.add_argument('--save_nifti',  default=True, type=bool)
@@ -110,8 +110,8 @@ def initialize_data(args):
 
     if args.amount_of_files is not None:
         config.amount_of_files = args.amount_of_files
-    config.cheakpoint_epoch = args.cheakpoint_epoch
-    print(config.cheakpoint_epoch)
+    config.checkpoint_epoch = args.checkpoint_epoch
+    # print(config.checkpoint_epoch)
     if args.amount_of_slices is not None:
         config.amount_of_slices = args.amount_of_slices
 
@@ -178,16 +178,16 @@ def initialize_data(args):
         if len(config.multi_gpu) > 1:
             config.use_multi_gpu = True
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_device)
-    print("config.multi_gpu - ",config.multi_gpu)
+    # print("config.multi_gpu - ",config.multi_gpu)
     # Create a folder of super-resolution experiment results
-    print("gpu available:", torch.cuda.is_available())
-    if torch.cuda.is_available():
-        print('gpu count:', str(torch.cuda.device_count()))
+    # print("gpu available:", torch.cuda.is_available())
+    # if torch.cuda.is_available():
+    #     print('gpu count:', str(torch.cuda.device_count()))
     start_time = time.time()
 
     if not config.resume:
 
-        print("config.resume - ",config.resume)
+        # print("config.resume - ",config.resume)
         print("Building and creating ESRT model from scratch")
         result_dir = config.path +  config.title_
         # file = open('config_var', 'wb')
@@ -233,7 +233,7 @@ def initialize_data(args):
     #     with_stack=True)
 
 
-    print("Load train dataset and valid dataset...")
+    print("Load train dataset and validation dataset...")
 
     if not config.resume or config.train_separate:
 
@@ -246,8 +246,8 @@ def initialize_data(args):
                                      config.amount_of_slices,max_slices=None \
                                      ,  patch_size=config.patch_size,
                                      fold=config.cross_validation_fold)
-        print(test_list[0])
-        print(test_list[1])
+        # print(test_list[0])
+        # print(test_list[1])
         with open(os.path.join(result_dir ,"train_list.json"), "w") as fp:
             json.dump(train_list, fp)
 
@@ -298,7 +298,7 @@ def initialize_data(args):
         list_test_volume = DatasetCreation.create_volume_list(test_file_to_idx, config.patch_size, train=False)
 
     valid_batch = config.val_batch_fsimo
-    print("Load train dataset and valid dataset...")
+    print("Load train dataset and validation dataset...")
     dataset_vl_lr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(valid_list[0]),lr=True,file_type =  config.data_type,
                 batch = valid_batch, patch_size=config.patch_size,use_db=config.use_db,
                                                            list_volumes=list_val_volume[0], file_to_idx=val_file_to_idx )
@@ -336,8 +336,8 @@ def initialize_data(args):
                                            worker_init_fn=worker_init_fn, drop_last=True, shuffle=True,
                                            prefetch_factor=4)
 
-    print("Load train dataset and valid dataset successfully.")
-    print ("Finish data peparation and parameters Initializaion")
+    print("Load train dataset and validation dataset successfully.")
+    print ("Finish data preparation and parameters initialization")
     return dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,config
 
 # def Initialize_Model_Param(args):
@@ -359,7 +359,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         generator = nn.DataParallel(generator, config.multi_gpu).to(config.device)
         discriminator_I = nn.DataParallel(discriminator_I, config.multi_gpu).to(config.device)
         discriminator_E = nn.DataParallel(discriminator_E, config.multi_gpu).to(config.device)
-    print("Build model successfully.")
+    print("Built model successfully.")
     print("Define all optimizer functions...")
     d_optimizer_I = optim.Adam(discriminator_I.parameters(), config.d_model_lr, config.d_model_betas)
     d_optimizer_E = optim.Adam(discriminator_E.parameters(), config.d_model_lr, config.d_model_betas)
@@ -446,7 +446,8 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
     for epoch in range(start_epoch, config.epochs):
         start_train = time.time()
 
-        train(discriminator_I,discriminator_E,
+        train(discriminator_I,
+              discriminator_E,
               generator,
               dl_train,
               color_criterion,
@@ -507,7 +508,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                         'max_size_lr' :max_size_lr,
                         'max_size_hr':max_size_hr}, os.path.join(result_dir,'Saved','Periodic_save', f"periodic.pth"))
 
-        if epoch in config.cheakpoint_epoch:
+        if epoch in config.checkpoint_epoch:
             temp_path = os.path.join(result_dir ,"Saved","check_points")
             print("checkpoint save {}".format(epoch))
             if not os.path.isdir(temp_path):

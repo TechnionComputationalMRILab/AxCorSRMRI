@@ -43,6 +43,6 @@ def setup_parser():
     parser.add_argument('--image_save_freq_batch', default=100, type=int)
     parser.add_argument('--image_save_freq_epoch', default=100, type=int)
     parser.add_argument('--augmentation_state', default=False, type=bool)
-    parser.add_argument('--cheakpoint_epoch', default=[], type=int,nargs='*')
+    parser.add_argument('--checkpoint_epoch', default=[], type=int,nargs='*')
     parser.add_argument('--transfer_learning', default=False, type=bool)
     return parser

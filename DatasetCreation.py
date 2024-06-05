@@ -487,7 +487,7 @@ def split_files_list_from_db(path_to_set,max_files,max_patches,num_of_consecutiv
     path_to_db = path_to_set + 'DB.csv'
     df = pd.read_csv(path_to_db)
 
-    print("path_to_db-", path_to_db)
+    # print("path_to_db-", path_to_db)
 
 
     df[["isotropic_coronal", "hr_coronal","hr_axial"]] = path_to_set + df[["isotropic_coronal", "hr_coronal","hr_axial"]]
@@ -526,9 +526,9 @@ def split_files_list_from_db(path_to_set,max_files,max_patches,num_of_consecutiv
     list_test_slices = create_patch_list(list_test, max_patches,num_of_consecutive_slices,patch_size = patch_size)
     list_val_slices = create_patch_list(list_val, max_patches,num_of_consecutive_slices,patch_size = patch_size)
 
-    print("length train_list - ",len(list_train_slices))
-    print("length val_list - ", len(list_val_slices))
-    print("length test_list - ", len(list_test_slices))
+    # print("length train_list - ",len(list_train_slices))
+    # print("length val_list - ", len(list_val_slices))
+    # print("length test_list - ", len(list_test_slices))
 
 
     list_train_volume,train_file_to_idx = create_patch_list_and_volume_list(list_train, train=True, patch_size=patch_size)
@@ -536,9 +536,9 @@ def split_files_list_from_db(path_to_set,max_files,max_patches,num_of_consecutiv
     list_test_volume,test_file_to_idx = create_patch_list_and_volume_list(list_test, train = False,patch_size = patch_size)
     list_val_volume,val_file_to_idx = create_patch_list_and_volume_list(list_val, train = False,patch_size = patch_size,)
 
-    print("length train_list volume - ",len(list_train_volume))
-    print("length val_list volume - ", len(list_val_volume))
-    print("length test_list volume - ", len(list_test_volume))
+    # print("length train_list volume - ",len(list_train_volume))
+    # print("length val_list volume - ", len(list_val_volume))
+    # print("length test_list volume - ", len(list_test_volume))
 
     return list_train_slices,list_val_slices,list_test_slices,False, list_train_volume, train_file_to_idx, \
         list_test_volume, test_file_to_idx, list_val_volume, val_file_to_idx
