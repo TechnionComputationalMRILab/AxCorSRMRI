@@ -2,6 +2,7 @@ import os
 import numpy as np
 import SimpleITK as sitk
 import pandas as pd
+from tqdm import tqdm
 
 def IsotropicResample(arg, size_ = [], interpolator = sitk.sitkLinear):
     """
@@ -68,8 +69,13 @@ def resample_cases(path_dir,prefix = None):
     :param prefix: String of files that need to be resampled.
     :return:
     """
+    total_files = sum(len(files) for _, _, files in os.walk(path_dir))
+    progress_bar = tqdm(total=total_files, desc="Processing files")
+
     for subdir, dirs, files in os.walk(path_dir):
         for file in files:
+            progress_bar.update(1)
+
             reader = sitk.ImageFileReader()
             # The option for nii images
             if ".dcm" not in file and ".nii" not in file:
@@ -93,6 +99,8 @@ def resample_cases(path_dir,prefix = None):
                     img_permute = pa.Execute(image)
                     isotropic_formula_image = IsotropicResample(img_permute)
                     save_img(isotropic_formula_image, path_copy, "_isotropic")
+    progress_bar.close()
+
 
 def create_database(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,test_frac=0.1,num_folds = 1):
     """
@@ -106,12 +114,16 @@ def create_database(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,t
     :return:
     """
     data_types_mapping = {"isotropic_coronal": [], "hr_coronal":[],"hr_axial":[]}
+    total_files = sum(len(files) for _, _, files in os.walk(Path_to_data))
+    progress_bar = tqdm(total=total_files, desc="Processing files")
 
 
     list_of_files = []
     for subdir, dirs, files in os.walk(Path_to_data):
         files.sort()
         for file in files:
+            progress_bar.update(1)
+            
             if "nii.gz" in file:
 
                 subdir_new = subdir
@@ -142,7 +154,7 @@ def create_database(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,t
 
                         data_types_mapping["hr_axial"].append(file)
 
-
+    progress_bar.close()
 
 
 
