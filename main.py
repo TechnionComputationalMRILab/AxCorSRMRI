@@ -85,7 +85,7 @@ def setup_parser_test():
 
 
 
-def Data_Inittializaion (args):
+def initialize_data(args):
 
     config.scheduler = args.scheduler
     config.transfer_learning = args.transfer_learning
@@ -649,7 +649,8 @@ def Reload_trained_model(config):
     generator.load_state_dict(checkpoint["Generator"], strict=config.strict)
 
     return generator
-def reconstract_SR_volumes_in_folder(args):
+
+def reconstruct_SR_volumes_in_folder(args):
 
     config.save_tensor=args.save_tensor
     config.save_nifti= args.save_nifti

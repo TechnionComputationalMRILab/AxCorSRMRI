@@ -8,7 +8,7 @@ num_workers = 12
 # parameters for train dataset
 
 time_str = time.strftime("_%d_%m_%Y_%H_%M")
-print('Start Time-' + str(time_str))
+# print('Start Time-' + str(time_str))
 title = ""
 title_ = str(title) + str(time_str)
 path =""

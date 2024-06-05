@@ -60,7 +60,7 @@ def save_img(image,path,title ='_' ):
 
 
 
-def ResampleCases(path_dir,prefix = None):
+def resample_cases(path_dir,prefix = None):
     """
     This function recieve path to directory of CORONAL nii.gz cases .Afterward,
     each coronal file with the prifex or "COR"/"Cor"/"cor" strings isotropicaly resampled and saved in the same path_dir.
@@ -94,7 +94,7 @@ def ResampleCases(path_dir,prefix = None):
                     isotropic_formula_image = IsotropicResample(img_permute)
                     save_img(isotropic_formula_image, path_copy, "_isotropic")
 
-def CreateDateBase(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,test_frac=0.1,num_folds = 1):
+def create_database(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,test_frac=0.1,num_folds = 1):
     """
     This function creates csv file with the path to isotropic coronal and axial files.
     Coronal and Axial files that belong to the same case should have the same case id in the beginning of file name.
