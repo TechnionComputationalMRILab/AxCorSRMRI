@@ -204,7 +204,8 @@ class ESRT(nn.Module):
 
     def forward(self, x1,x2 = None, test=False):
         # x1 = self.sub_mean(x1)
-        x1 = self.head(x1)
+        
+        x1 = self.head(x1.type(torch.FloatTensor))
         res2 = x1
         #res2 = x2
         body_out = []

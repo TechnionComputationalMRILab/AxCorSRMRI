@@ -89,7 +89,7 @@ def worker_init_fn(worker_id):
     worker_id = worker_info.id
     dataset.start = overall_start + worker_id * per_worker
     dataset.end = min(dataset.start + per_worker, overall_end)
-    print("worker ID-{},Dataset_start-{},Dataset_end-{},per_worker-{}".format(worker_id,dataset.start,dataset.end,per_worker))
+    # print("worker ID-{},Dataset_start-{},Dataset_end-{},per_worker-{}".format(worker_id,dataset.start,dataset.end,per_worker))
 
 
 def return_list_of_valuble_slices(file_path,num_of_consecutive_slices = 3,axis=0):
@@ -175,7 +175,7 @@ def extract_patches(list_of_slices, patch_size = 64,train = False,state = False)
             if size_y - (y_start[-1] + patch_size) > (patch_size / 2):
                 y_start = np.append(y_start, y_start[-1] + overlap_y)
         except:
-            print("got error with the file {}".format(coustom_slices_old[i]))
+            print("Error with the file {}".format(coustom_slices_old[i]))
 
         patch_id = list(product(x_start, y_start))
         if x_start[-1]+patch_size != size_x or y_start[-1]+patch_size != size_y:
@@ -457,7 +457,7 @@ def worker_init_fn(worker_id):
     worker_id = worker_info.id
     dataset.start = overall_start + worker_id * per_worker
     dataset.end = min(dataset.start + per_worker, overall_end)
-    print("worker ID-{},Dataset_start-{},Dataset_end-{},per_worker-{}".format(worker_id,dataset.start,dataset.end,per_worker))
+    # print("worker ID-{},Dataset_start-{},Dataset_end-{},per_worker-{}".format(worker_id,dataset.start,dataset.end,per_worker))
 
 
 def random_patch_coor(image_size,patch_size):

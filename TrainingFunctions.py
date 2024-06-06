@@ -372,6 +372,7 @@ def recon_im_torch_rectangle_gaus(patches, im_h, im_w, stride_x, stride_y,device
     patch_size = patches.shape[2]  # patches assumed to be square
     patch_weight = gkern(patches.shape[2],patches.shape[2]/2+1)
     patch_weight = (torch.ones(patches.shape)*patch_weight).to(device)
+    patches = patches.to(device)
     patches = patch_weight*patches
     patches = torch.permute(patches,(1,2,0))
     patches =patches.reshape(patches.size()[0]*patches.size()[1],patches.size()[-1]).unsqueeze(0)
@@ -449,6 +450,7 @@ def train(discriminator_I,
 
         # Use generators to create super-resolution images
         sr = generator(lr.squeeze())
+        sr = sr.to(config.device)
         if torch.isnan(sr).any():
             print("NAN")
             break
@@ -473,12 +475,18 @@ def train(discriminator_I,
             d_optimizer_E.zero_grad()
 
             hr_output_I = discriminator_I(hr)
+            hr_output_I = hr_output_I.to(config.device)
             hr_E = LPF(hr)
             hr_output_E = discriminator_E(hr - hr_E)
+            hr_output_E = hr_output_E.to(config.device)
 
             sr_output_I = discriminator_I(sr.detach())
+            sr_output_I = sr_output_I.to(config.device)
+            
             sr_E = LPF(sr.detach())
             sr_output_E = discriminator_E(sr.detach() - sr_E)
+            sr_output_E = sr_output_E.to(config.device)
+            
             if loss_type =='rel':
                 d_loss_hr_I = adversarial_criterion(hr_output_I - torch.mean(sr_output_I), real_label)
                 d_loss_sr_I = adversarial_criterion(sr_output_I - torch.mean(hr_output_I), fake_label)
@@ -513,9 +521,14 @@ def train(discriminator_I,
             # Initialize the generator optimizer gradient
             g_optimizer.zero_grad()
             sr_output_I = discriminator_I(sr)
+            sr_output_I = sr_output_I.to(config.device)
             sr_E = LPF(sr)
             sr_output_E = discriminator_E(sr - sr_E)
+            sr_output_E = sr_output_E.to(config.device)
+            
             hr_output_I = discriminator_I(hr.detach())
+            hr_output_I = hr_output_I.to(config.device)
+            
             hr_E = LPF(hr).detach()
             hr_output_E = discriminator_E(hr.detach() - hr_E)
             mid_slice = int(lr.shape[2] / 2)
@@ -614,7 +627,7 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
     rec_sr_tot_max_size = []
     max_patches_lr = 0
     max_patches_hr = 0
-    print("Start Vlidation")
+    # print("Starting Validation")
 
     with torch.no_grad():
         end = time.time()
@@ -647,10 +660,10 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
                         max_size_hr = [max_0,max_1]
                     if max_p >  max_patches_hr:
                         max_patches_hr = max_p
-            print("LR max size {} max patches {}".format(max_size_lr,max_patches_lr))
-            print("HR max size {} max patches {}".format(max_size_hr,max_patches_hr))
+            # print("LR max size {} max patches {}".format(max_size_lr,max_patches_lr))
+            # print("HR max size {} max patches {}".format(max_size_hr,max_patches_hr))
         start_2 = time.time()
-        print("Start HR reconstract")
+        # print("Start HR reconstruct")
         for index, (hr_tot, size_hr_tot,_) in enumerate(valid_dataloader_hr):
 
             #print(size_hr_tot.size())
@@ -671,9 +684,9 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
                 rec_hr_tot.append(rec_hr_resize)
 
         end_1 = time.time()
-        print('Finish reconstrct HR', time.strftime("%H:%M:%S", time.gmtime(end_1 - start_2)))
+        # print('Finish reconstruct HR', time.strftime("%H:%M:%S", time.gmtime(end_1 - start_2)))
         start_1 = time.time()
-        print("Start LR reconstract")
+        # print("Start LR reconstruct")
         for index_, (lr_tot, size_lr_tot,title_tot) in enumerate(valid_dataloader_lr):
 
             sample_num = lr_tot.size()[0]
@@ -725,7 +738,7 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
                     # if np.isnan(rec_hr).any():
                     #     print("NAN")
                     #rec_hr_tot.append(rec_hr)
-                    temp_title = "Reconstracted_"
+                    temp_title = "Reconstructed_"
                     #rec_sr_tot.append(rec_sr)
 
                     step = visualize_Multi_slice(lr, sr, epoch, result_dir, config.title_,temp_title,index ,writer, step)
@@ -740,8 +753,8 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
 
 
         end_2 = time.time()
-        print('Finish reconstrct LR', time.strftime("%H:%M:%S", time.gmtime(end_2 - start_1)))
-        print('Reconstruct all images-', time.strftime("%H:%M:%S", time.gmtime(end_2- start_2)))
+        # print('Finish reconstruct LR', time.strftime("%H:%M:%S", time.gmtime(end_2 - start_1)))
+        # print('Reconstruct all images-', time.strftime("%H:%M:%S", time.gmtime(end_2- start_2)))
 
         rec_hr_tensor = torch.stack(rec_hr_tot).to(config.device)
 
@@ -753,7 +766,7 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
         FID_HR_LR = LossFunctions.calculate_fretchet(rec_hr_tensor, rec_mid_tensor_max_size,
                                                             InceptionV3_model)
         end_3 = time.time()
-        print('Finish FID calc', time.strftime("%H:%M:%S", time.gmtime(end_3- start_3)))
+        # print('Finish FID calc', time.strftime("%H:%M:%S", time.gmtime(end_3- start_3)))
         KID_original = []
         KID_original_avg = []
         KID_original_lr = []
@@ -769,14 +782,14 @@ def validate(model,InceptionV3_model, valid_dataloader_lr,valid_dataloader_hr, e
 
 
         end_4 = time.time()
-        print('Finish KID calc', time.strftime("%H:%M:%S", time.gmtime(end_4- start_4)))
+        # print('Finish KID calc', time.strftime("%H:%M:%S", time.gmtime(end_4- start_4)))
 
         start_3 = time.time()
 
-        print(f"* FID SR - HR: {np.mean(FID_HR_SR):4.2f},.\n")
-        print(f"* FID LR - HR: {np.mean(FID_HR_LR):4.2f} .\n")
-        print(f"* KID SR - HR: {np.mean(KID_original):4.2f} +/- {np.std(KID_original):4.2f}.\n")
-        print(f"* KID LR - HR: {np.mean(KID_original_lr):4.2f} +/- {np.std(KID_original_lr):4.2f}.\n")
+        # print(f"* FID SR - HR: {np.mean(FID_HR_SR):4.2f},.\n")
+        # print(f"* FID LR - HR: {np.mean(FID_HR_LR):4.2f} .\n")
+        # print(f"* KID SR - HR: {np.mean(KID_original):4.2f} +/- {np.std(KID_original):4.2f}.\n")
+        # print(f"* KID LR - HR: {np.mean(KID_original_lr):4.2f} +/- {np.std(KID_original_lr):4.2f}.\n")
 
 
         writer.add_scalar("Valid/FID_HR_SR", np.mean(FID_HR_SR), epoch)
@@ -805,7 +818,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
     rec_mid_tot = []
     rec_mid_tot_max_size = []
     rec_sr_tot_max_size = []
-    print("Start Vlidation")
+    print("Start Validation")
     max_size_lr = [0,0]
     max_size_hr = [0,0]
     with torch.no_grad():
@@ -847,7 +860,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
                 temp_title = slice_title[0].split('_slice')[0]
 
             if slice_title[0].split('_slice')[0] != temp_title:
-                print()
+                # print()
                 temp_file_hr_weight_ = torch.stack(temp_file_hr_weight)
 
                 if config.save_tensor:
@@ -906,7 +919,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
         temp_file_lr_avg =[]
         temp_file_lr_weight=[]
         temp_title = []
-        print("Reconstract LR images")
+        print("Reconstructing LR images...")
         for index, (lr_tot, size_lr_tot,slice_title) in enumerate(valid_dataloader_lr):
             #print(slice_title)
             # if size_lr_tot[-1] == 320:
@@ -1032,13 +1045,13 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
 
         if config.save_tensor:
             #print(temp_file_sr_weight_.shape)
-            print("Saving tensors for {} file".format(temp_title))
+            # print("Saving tensors for {} file".format(temp_title))
             save_tensor(temp_file_sr_weight_, "SR",  temp_title, result_dir_for_tensors)
             save_tensor(temp_file_lr_weight_, "LR", temp_title, result_dir_for_tensors)
 
 
         if config.save_nifti:
-            print("Saving tensors for {} file".format(temp_title))
+            # print("Saving tensors for {} file".format(temp_title))
             #print(temp_file_sr_weight_.shape)
             # temp_title_ = temp_title + "_SR"
             save_tensor_to_img(temp_file_sr_weight_,result_dir_for_tensors, temp_title )
@@ -1047,7 +1060,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
         rec_hr_tensor = torch.stack(rec_hr_tot).to(config.device)
 
 
-        print("Calculating FID")
+        # print("Calculating FID")
 
 
         rec_sr_tensor_max_size = torch.stack(rec_sr_tot_max_size).to(config.device)
@@ -1060,7 +1073,7 @@ def Test(model, valid_dataloader_lr,valid_dataloader_hr,result_dir,patch_size,In
                                           Incep_model)
         rec_mid_tensor_max_size = rec_mid_tensor_max_size.detach().cpu()
 
-        print("Calculating KID")
+        # print("Calculating KID")
 
         KID_original = []
         KID_original_avg = []
@@ -1117,14 +1130,14 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
 
                 if slice_title[0].split('_slice')[0] != temp_title:
                     # print(temp_file_sr_weight_.shape)
-                    print("Saving tensors for {} file".format(temp_title))
+                    # print("Saving tensors for {} file".format(temp_title))
                     save_tensor(temp_file_sr_weight_, "SR", temp_title, config.result_dir)
                     save_tensor(temp_file_lr_weight_, "LR", temp_title, config.result_dir)
 
             if config.save_nifti:
                 # print(temp_file_sr_weight_.shape)
                 # temp_title_ = temp_title + "_SR"
-                print("Saving nifti for {} file".format(temp_title))
+                # print("Saving nifti for {} file".format(temp_title))
                 save_tensor_to_img(temp_file_sr_weight_, config.result_dir, temp_title)
 
             temp_title = slice_title[0].split('_slice')[0]
@@ -1181,14 +1194,14 @@ def reconstract_SR_volumes(model,valid_dataloader_lr,config):
 
     if config.save_tensor:
         # print(temp_file_sr_weight_.shape)
-        print("Saving tensors for {} file".format(temp_title))
+        # print("Saving tensors for {} file".format(temp_title))
         save_tensor(temp_file_sr_weight_, "SR", temp_title, config.result_dir)
         save_tensor(temp_file_lr_weight_, "LR", temp_title,  config.result_dir)
 
     if config.save_nifti:
         # print(temp_file_sr_weight_.shape)
         # temp_title_ = temp_title + "_SR"
-        print("Saving nifti for {} file".format(temp_title))
+        # print("Saving nifti for {} file".format(temp_title))
         save_tensor_to_img(temp_file_sr_weight_, config.result_dir, temp_title)
 
 

@@ -59,7 +59,7 @@ parser = setup_parser_test()
 args_, _ = parser.parse_known_args([])
 vars(args_).update(override_args_test)
 
-reconstract_SR_volumes_in_folder(args_)
+reconstruct_SR_volumes_in_folder(args_)
 ```
 _______________________________________________________________________
 ## License

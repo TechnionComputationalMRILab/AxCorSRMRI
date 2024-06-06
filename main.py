@@ -22,6 +22,7 @@ matplotlib.use('Agg')
 
 from ESRT.model import esrt
 
+from tqdm import trange
 import General_config as config
 import argparse
 global_args = None
@@ -188,7 +189,7 @@ def initialize_data(args):
     if not config.resume:
 
         # print("config.resume - ",config.resume)
-        print("Building and creating ESRT model from scratch")
+        print("Building and creating ESRT model from scratch.")
         result_dir = config.path +  config.title_
         # file = open('config_var', 'wb')
         # pickle.dump(config, file)
@@ -233,7 +234,7 @@ def initialize_data(args):
     #     with_stack=True)
 
 
-    print("Load train dataset and validation dataset...")
+    print("Loading the training and validation datasets...")
 
     if not config.resume or config.train_separate:
 
@@ -298,7 +299,7 @@ def initialize_data(args):
         list_test_volume = DatasetCreation.create_volume_list(test_file_to_idx, config.patch_size, train=False)
 
     valid_batch = config.val_batch_fsimo
-    print("Load train dataset and validation dataset...")
+    print("Loading the training and validation datasets...")
     dataset_vl_lr = DatasetCreation.CustomDataset_Test(slices = config.amount_of_slices, file_list = sorted(valid_list[0]),lr=True,file_type =  config.data_type,
                 batch = valid_batch, patch_size=config.patch_size,use_db=config.use_db,
                                                            list_volumes=list_val_volume[0], file_to_idx=val_file_to_idx )
@@ -336,8 +337,8 @@ def initialize_data(args):
                                            worker_init_fn=worker_init_fn, drop_last=True, shuffle=True,
                                            prefetch_factor=4)
 
-    print("Load train dataset and validation dataset successfully.")
-    print ("Finish data preparation and parameters initialization")
+    print("Loaded training and validation datasets successfully.")
+    print ("Finished data preparation and parameters initialization.")
     return dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,config
 
 # def Initialize_Model_Param(args):
@@ -350,7 +351,7 @@ def initialize_data(args):
 
 def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_test_hr,result_dir,writer,args):
 
-    print("Build model...")
+    print("Building model...")
     generator = esrt.ESRT(upscale=1)
     discriminator_I = New_D_doubleconv()
     discriminator_E = New_D_doubleconv()
@@ -360,12 +361,12 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         discriminator_I = nn.DataParallel(discriminator_I, config.multi_gpu).to(config.device)
         discriminator_E = nn.DataParallel(discriminator_E, config.multi_gpu).to(config.device)
     print("Built model successfully.")
-    print("Define all optimizer functions...")
+    print("Defining all optimizer functions...")
     d_optimizer_I = optim.Adam(discriminator_I.parameters(), config.d_model_lr, config.d_model_betas)
     d_optimizer_E = optim.Adam(discriminator_E.parameters(), config.d_model_lr, config.d_model_betas)
     g_optimizer = optim.Adam(generator.parameters(), config.g_model_lr, config.g_model_betas)
-    print("Define all optimizer functions successfully.")
-    print("Define all optimizer scheduler functions...")
+    print("Defined all optimizer functions successfully.")
+    print("Defining all optimizer scheduler functions...")
     if config.scheduler == 'const':
         d_scheduler_I = lr_scheduler.StepLR(d_optimizer_I, config.d_optimizer_step_size, config.d_optimizer_gamma)
         d_scheduler_E = lr_scheduler.StepLR(d_optimizer_E, config.d_optimizer_step_size, config.d_optimizer_gamma)
@@ -381,15 +382,15 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         g_scheduler = torch.optim.lr_scheduler.MultiplicativeLR(g_optimizer, config.lambda1)
         d_scheduler_E = torch.optim.lr_scheduler.MultiplicativeLR(d_optimizer_E, config.lambda1)
         d_scheduler_I = torch.optim.lr_scheduler.MultiplicativeLR(d_optimizer_I, config.lambda1)
-    print("Define all optimizer scheduler functions successfully.")
-    print("Define all loss functions...")
+    print("Defined all optimizer scheduler functions successfully.")
+    print("Defining all loss functions...")
     color_criterion = nn.L1Loss().to(config.device)
     if config.loss == 'L1':
         adversarial_criterion = nn.BCEWithLogitsLoss().to(config.device)
     else:
         adversarial_criterion = nn.MSELoss().to(config.device)
-    print("Define all loss functions successfully.")
-    print("Check whether the training weight is restored...")
+    print("Defined all loss functions successfully.")
+    # print("Check whether the training weight is restored...")
 
     flag_resume = False
     start_epoch = 0
@@ -435,15 +436,15 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
             count = checkpoint["count"]
         max_size_lr = checkpoint["max_size_lr"]
         max_size_hr = checkpoint["max_size_hr"]
-    print("Check whether the training weight is restored successfully.")
+    # print("Check whether the training weight is restored successfully.")
     scaler = amp.GradScaler()
     block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[2048]
     InceptionV3_model = InceptionV3([block_idx]).to(config.device)
     InceptionV3_model = InceptionV3_model
-    print("Start train the model.")
+    print("Starting model training...")
     start_all_train = time.time()
     step = 0
-    for epoch in range(start_epoch, config.epochs):
+    for epoch in trange(start_epoch, config.epochs):
         start_train = time.time()
 
         train(discriminator_I,
@@ -460,7 +461,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
               scaler,
               writer, config)
         end_train = time.time()
-        print('Epoch train time-', time.strftime("%H:%M:%S", time.gmtime(end_train - start_train)))
+        # print('Epoch train time-', time.strftime("%H:%M:%S", time.gmtime(end_train - start_train)))
 
         if config.val_epoch !=0:
             if epoch % config.val_epoch == 0 :
@@ -472,11 +473,11 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
                                                                              config.patch_size,
                                                                              max_size_lr, max_size_hr,config)
                 end_val = time.time()
-                print('Epoch val time-', time.strftime("%H:%M:%S", time.gmtime(end_val - start_val)))
+                # print('Epoch val time-', time.strftime("%H:%M:%S", time.gmtime(end_val - start_val)))
 
         end_epoch = time.time()
 
-        print('Total epoch time - ', time.strftime("%H:%M:%S", time.gmtime(end_epoch - start_train)))
+        # print('Total epoch time - ', time.strftime("%H:%M:%S", time.gmtime(end_epoch - start_train)))
         #FID
         is_best_fid = fid < best_fid
         best_fid = min(fid, best_fid)
@@ -485,7 +486,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         is_best_kid = kid < best_kid
         best_kid = min(kid, best_kid)
 
-        print("periodic save ")
+        # print("periodic save ")
         temp_path = os.path.join(result_dir,"Saved","Periodic_save")
         if not os.path.isdir(temp_path):
             os.makedirs(temp_path, exist_ok=True)
@@ -510,7 +511,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
 
         if epoch in config.checkpoint_epoch:
             temp_path = os.path.join(result_dir ,"Saved","check_points")
-            print("checkpoint save {}".format(epoch))
+            # print("checkpoint save {}".format(epoch))
             if not os.path.isdir(temp_path):
                 os.makedirs(temp_path, exist_ok=True)
             torch.save({
@@ -624,7 +625,7 @@ def training_validation_test(dl_train , dl_valid_lr,dl_valid_hr,dl_test_lr,dl_te
         csvwriter = csv.DictWriter(file, keys)
         csvwriter.writeheader()
         csvwriter.writerows(list_results)
-    print(list_results)
+    # print(list_results)
 
     print("END testing")
 
@@ -666,7 +667,7 @@ def reconstruct_SR_volumes_in_folder(args):
     # config.title_":""})
     # config.multi_gpu":""})
     # config.use_multi_gpu":False})
-    print(config)
+    # print(config)
     time_str = time.strftime("_%d_%m_%Y_%H_%M")
     config.title_ = str(args.title) + str(time_str)
     result_dir = os.path.join(config.path,config.title_)
@@ -679,15 +680,15 @@ def reconstruct_SR_volumes_in_folder(args):
             config.use_multi_gpu = True
 
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_device)
-    print("config.multi_gpu - ", config.multi_gpu)
-    print("config.use_multi_gpu {}".format(config.use_multi_gpu))
+    # print("config.multi_gpu - ", config.multi_gpu)
+    # print("config.use_multi_gpu {}".format(config.use_multi_gpu))
 
     # Create a folder of super-resolution experiment results
-    print("gpu available:", torch.cuda.is_available())
-    if torch.cuda.is_available():
-        print('gpu count:', str(torch.cuda.device_count()))
+    # print("gpu available:", torch.cuda.is_available())
+    # if torch.cuda.is_available():
+    #     print('gpu count:', str(torch.cuda.device_count()))
 
-    print("Creating the dataset")
+    print("Creating the dataset...")
     list_test_slices,list_test_volume,test_file_to_idx = make_list_to_reconstract(config)
     istropic_dataset = DatasetCreation.CustomDataset_Test(slices=config.num_of_consecutive_slices, file_list=sorted(list_test_slices),
                                                        lr=True, file_type='nifti',
@@ -697,6 +698,6 @@ def reconstruct_SR_volumes_in_folder(args):
     isotropic_dataloader = torch.utils.data.DataLoader(dataset=istropic_dataset, batch_size=config.batch_size,
                                            num_workers=args.max_workers_test,prefetch_factor=4)
     model = Reload_trained_model(config)
-    print("Starting SR reconstruction")
+    print("Starting SR reconstruction...")
     reconstract_SR_volumes(model,isotropic_dataloader,config)
-    print("Finished SR reconstruction")
+    print("Finished SR reconstruction.")

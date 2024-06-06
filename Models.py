@@ -41,7 +41,7 @@ class GaussianFilter(nn.Module):
         self.gaussian_filter.weight.requires_grad = False
 
     def forward(self, x):
-        return self.gaussian_filter(x)
+        return self.gaussian_filter(x.type(torch.cuda.FloatTensor))
 
 class FilterLow(nn.Module):
     def __init__(self, recursions=1, kernel_size=5, stride=1, padding=True, include_pad=True, gaussian=True):
@@ -98,7 +98,7 @@ class New_D_doubleconv(nn.Module):
     def forward(self, input):
         # add sequence of convolutional and max pooling layers
         #input size [batch,1,240,240]
-        x_temp = F.relu(self.conv1(input))
+        x_temp = F.relu(self.conv1(input.type(torch.FloatTensor)))
         # current state [batch,16,240,240]
         x = self.pool(F.relu(self.conv2(x_temp))+x_temp)
         # current state [batch,16,120,120]
@@ -170,7 +170,8 @@ class InceptionV3(nn.Module):
 
         self.blocks = nn.ModuleList()
 
-        inception = models.inception_v3(pretrained=True)
+        # inception = models.inception_v3(pretrained=True)
+        inception = models.inception_v3(weights=True)
 
         # Block 0: input to maxpool1
         block0 = [
