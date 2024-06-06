@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -14,5 +14,6 @@ setup(
     author='Technion Computational MRI Lab',
     author_email='tcml.bme@gmail.com',
     url='https://github.com/TechnionComputationalMRILab/AxCorSRMRI',
+    packages=find_packages(),
     install_requires=requirements,
 )
