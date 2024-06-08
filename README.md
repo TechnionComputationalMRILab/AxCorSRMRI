@@ -32,8 +32,6 @@ create_database(
 
 - Set the main framework and model hyperparameters. For a detailed explanation of each parameter, check the `parameter_dictionary.txt` file. The default training parameters are already established in setup_parser().        
 ```
-from axcorsrmri import parser_setup
-
 override_args = {
     "path_to_set": r"./data/",
     "path_to_results": r"./results/",
@@ -74,18 +72,29 @@ override_args_test = {
 test_args = test_parser_setup(override_args_test)
 reconstruct_SR_volumes_in_folder(test_args)
 ```
+- If you'd like to keep an eye on your training progress, you can use TensorBoard package.
+```
+tensorboard --logdir=r"./results/directory_to_trained_model/"
+```
+
+This model was trained using four Nvidia A100 40G cards. It took about 33 hours to train for 1000 epochs. So, if you're using just one GPU, it would likely take around 120 hours to train. 
 _______________________________________________________________________
-
 ## License
-For this work, we used code from the following works -
+For this project, we incorporated code from the following sources-
 
-[1] Transformer for Single Image Super-Resolution
-Zhisheng Lu, Juncheng Li, Hong Liu, Chaoyan Huang, Linlin Zhang, Tieyong Zeng
+[1] Lu, Z., Liu, H., Li, J., & Zhang, L. (2021). Efficient Transformer for Single Image Super-Resolution. ArXiv, abs/2108.11084.
 
-[2] Direct Unsupervised Super-Resolution Using Generative Adversarial Network
-(DUS-GAN) for Real-World Data Kalpesh Prajapati , Vishal Chudasama
+[2] K. Prajapati et al., "Direct Unsupervised Super-Resolution Using Generative Adversarial Network (DUS-GAN) for Real-World Data," in IEEE Transactions on Image Processing, vol. 30, pp. 8251-8264, 2021, doi: 10.1109/TIP.2021.3113783.
+keywords: {Training;Degradation;Generative adversarial networks;Superresolution;Task analysis;Unsupervised learning;Quality assessment;Unsupervised learning;image quality;image enhancement;image reconstruction;spatial resolution;artificial neural networks;interpolation},
 
-[3]  InceptionV3 implementation is taken from 
+
+[3] FID and KID calculation are made by PIQ package - Kastryulin, Sergey & Zakirov, Jamil & Prokopenko, Denis & Dylov, Dmitry. (2022). PyTorch Image Quality: Metrics for Image Quality Assessment.   
+
+
+[4] InceptionV3 implementation is taken from 
 https://github.com/mseitzer/pytorch-fid
 
-[4] FID and KID calculation are made by PIQ package - PyTorch Image Quality: Metrics for Image Quality Assessment by Kastryulin, Sergey and Zakirov, Jamil and Prokopenko, Denis and Dylov, Dmitry V. 
+
+
+
+

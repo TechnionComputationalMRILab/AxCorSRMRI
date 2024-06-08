@@ -162,21 +162,25 @@ def create_database(Path_to_data,cor_prefix=None,ax_prefix=None,train_frac=0.8,t
 
     df = pd.DataFrame(data_types_mapping, index=list_of_files)
     df = df.iloc[np.random.permutation(len(df))]
-    train_size = round(len(df)*train_frac)
-    test_size = round(len(df)*test_frac)
-    val_size = len(df) - train_size - test_size
-    for i in range(num_folds):
-        test_ind = i*(test_size+val_size)+1
-        if test_ind == 0:
-            state = [ *['test'] * test_size,*['valid'] * val_size, *['train'] * train_size]
-        else:
-            if test_ind + test_size + test_size > len(df) - 1:
-                diff = test_ind + test_size + test_size - ( len(df) - 1)
-                state = [*['valid'] * diff,*['train'] * (test_ind - 1), *['test'] * test_size, *['valid'] * (val_size - diff),
-                         *['train'] * (train_size - test_ind)]
+    if train_frac == 1:
+        state =  [*['train'] * len(df)]
+        df[str(1)] = state
+    else:
+        train_size = round(len(df)*train_frac)
+        test_size = round(len(df)*test_frac)
+        val_size = len(df) - train_size - test_size
+        for i in range(num_folds):
+            test_ind = i*(test_size+val_size)+1
+            if test_ind == 0:
+                state = [ *['test'] * test_size,*['valid'] * val_size, *['train'] * train_size]
             else:
-                state = [*['train'] * (test_ind-1),*['test'] * test_size,*['valid'] * val_size,*['train'] * (train_size-test_ind+1)]
-        df[str(i+1)] =state
+                if test_ind + test_size + test_size > len(df) - 1:
+                    diff = test_ind + test_size + test_size - ( len(df) - 1)
+                    state = [*['valid'] * diff,*['train'] * (test_ind - 1), *['test'] * test_size, *['valid'] * (val_size - diff),
+                             *['train'] * (train_size - test_ind)]
+                else:
+                    state = [*['train'] * (test_ind-1),*['test'] * test_size,*['valid'] * val_size,*['train'] * (train_size-test_ind+1)]
+            df[str(i+1)] =state
 
     filename = os.path.join(Path_to_data,"DB.csv")
     df.to_csv(filename)

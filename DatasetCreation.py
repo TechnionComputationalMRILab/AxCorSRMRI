@@ -499,19 +499,24 @@ def split_files_list_from_db(path_to_set,max_files,max_patches,num_of_consecutiv
     else:
         df['state'] = df["1"]
 
-    if max_files is not None and max_files < len(df):
-        ratio = max_files/ len(df[df['state']=='train'])
-        df_train = df[df['state']=='train'].reset_index(drop = True)
-        df_train = df_train.loc[0:max_files]
-        df_valid = df[df['state']=='valid'].reset_index(drop = True)
-        df_valid = df_valid.iloc[0:round(len(df_valid)*ratio)]
-        df_test = df[df['state']=='test'].reset_index(drop = True)
-        df_test = df_test.iloc[0:round(len(df_test)*ratio)]
+    if len[df[df['state']=='train']] == len(df):
+        df_train = df
+        df_test = df
+        df_valid = df.sample(frac=0.1)
     else:
-        max_files = len(df)
-        df_train = df[df['state'] == 'train']
-        df_valid = df[df['state'] == 'valid'].reset_index(drop=True)
-        df_test = df[df['state'] == 'test'].reset_index(drop=True)
+        if max_files is not None and max_files < len(df):
+            ratio = max_files/ len(df[df['state']=='train'])
+            df_train = df[df['state']=='train'].reset_index(drop = True)
+            df_train = df_train.loc[0:max_files]
+            df_valid = df[df['state']=='valid'].reset_index(drop = True)
+            df_valid = df_valid.iloc[0:round(len(df_valid)*ratio)]
+            df_test = df[df['state']=='test'].reset_index(drop = True)
+            df_test = df_test.iloc[0:round(len(df_test)*ratio)]
+        else:
+            max_files = len(df)
+            df_train = df[df['state'] == 'train']
+            df_valid = df[df['state'] == 'valid'].reset_index(drop=True)
+            df_test = df[df['state'] == 'test'].reset_index(drop=True)
 
 
 
