@@ -499,7 +499,7 @@ def split_files_list_from_db(path_to_set,max_files,max_patches,num_of_consecutiv
     else:
         df['state'] = df["1"]
 
-    if len[df[df['state']=='train']] == len(df):
+    if len(df[df['state']=='train']) == len(df):
         df_train = df
         df_test = df
         df_valid = df.sample(frac=0.1)
