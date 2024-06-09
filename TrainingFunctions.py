@@ -215,7 +215,7 @@ def visualize_reconstrated_no_hr(lr_0,lr_1,lr_2, sr, epoch, path, title_,rec_tit
 
     fig, axs = plt.subplots(nrows=2, ncols=3, figsize=(9, 12))
 
-    title = rec_title + 'reconstracted_epoch-' + str(epoch)+ '_batch_' + str(index)
+    title = rec_title + 'reconstructed_epoch-' + str(epoch)+ '_batch_' + str(index)
     imgs = []
     for k in range((config.amount_of_slices + 2)*2):
         imgs.append('img'+str(k))
