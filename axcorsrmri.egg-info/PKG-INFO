@@ -1,21 +1,30 @@
+Metadata-Version: 2.1
+Name: axcorsrmri
+Version: 0.0.2
+Home-page: https://github.com/TechnionComputationalMRILab/AxCorSRMRI
+Author: Technion Computational MRI Lab
+Author-email: tcml.bme@gmail.com
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: SimpleITK==2.3.1
+Requires-Dist: tensorflow
+Requires-Dist: pandas==1.3.5
+Requires-Dist: tensorboard
+Requires-Dist: protobuf==3.14.0
+Requires-Dist: torchvision
+Requires-Dist: piq==0.7.0
+Requires-Dist: matplotlib==3.4.2
+Requires-Dist: tqdm==4.66.4
+Requires-Dist: h5py>=2.9.0
+Requires-Dist: wrapt>=1.11.0
+Requires-Dist: scipy==1.10.1
+Requires-Dist: charset-normalizer==3.1.0
+Requires-Dist: ipykernel==6.14.0
+Requires-Dist: jupyter==1.0.0
+
 # AxCorSRMRI
 Self-Supervised Realistic Through-Plane MRI Super Resolution from Clinical 2D Axial and Coronal Acquisition.
 
-## Installation
-
-```
-pip install torch==2.3.1+cu118 torchvision --index-url https://download.pytorch.org/whl/cu118
-pip install axcorsrmri
-```
-
-Manual install
-
-```
-git clone https://github.com/TechnionComputationalMRILab/AxCorSRMRI.git
-cd AxCorSRMRI
-pip install -e .
-
-```
 
 ## Instruction 
 

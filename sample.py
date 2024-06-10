@@ -39,10 +39,6 @@ override_args = {
 
 args = parser_setup(override_args)
 
-
-import os
-os.environ["LD_LIBRARY_PATH"] = "/home/ang.a/.conda/envs/axcorsrmri/lib/python3.8/site-packages/tensorrt"
-
 from axcorsrmri import initialize_data
 dl_train, dl_valid_lr, dl_valid_hr, dl_test_lr, dl_test_hr, result_dir, writer, config = initialize_data(args)
 
