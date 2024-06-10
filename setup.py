@@ -8,7 +8,7 @@ with open('requirements.txt', 'r') as f:
 
 setup(
     name='axcorsrmri',
-    version='0.0.4',
+    version='0.0.5',
     long_description=readme,
     long_description_content_type='text/markdown',
     author='Technion Computational MRI Lab',
